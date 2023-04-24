@@ -42,19 +42,21 @@ class MongoDbStorage implements IStorage{
       _created: DateTime.now().microsecondsSinceEpoch,
       _messages: []
     };
-    var r = await _collection.insert(doc);
-    log('new conversation saved: $r');
-    saveTags(tags.toSet());
+    var r = await _collection.insertOne(doc);
+    log('new conversation save result: ${r.isSuccess}');
+    saveTags(false, tags.toSet());
     return _uuidStr;
   }
 
-  Future<void> saveTags(Set<String> tags) async{
+  Future<void> saveTags(bool updateDocTags, Set<String> tags) async{
     if(tags.isEmpty) return Future.value();
 
-    var q = where.eq(_uuid,_uuidStr);
-    var u = modify.set(_tags, tags);
-    var r = await _collection.update(q, u);
-    log('Updated $_uuidStr tags : $r');
+    if(updateDocTags) {
+      var q = where.eq(_uuid, _uuidStr);
+      var u = modify.set(_tags, tags.toList());
+      var r = await _collection.updateOne(q, u);
+      log('Updated $_uuidStr tags : $r');
+    }
 
     var diff = tags.difference(_knownTags);
     if(diff.isEmpty){
@@ -66,11 +68,11 @@ class MongoDbStorage implements IStorage{
       var q = where.eq(_settingsName, _settingsApp);
       var app = await _settingsCollection.findOne(q);
       if(app != null){
-        var u = modify.set(_tags, diff);
+        var u = modify.set(_tags, diff.toList());
         await _settingsCollection.update(q, u);
       }
       else{
-        await _settingsCollection.insert({_settingsName: _settingsApp, _tags: diff});
+        await _settingsCollection.insertOne({_settingsName: _settingsApp, _tags: diff.toList()});
       }
     }
   }
@@ -78,9 +80,9 @@ class MongoDbStorage implements IStorage{
   Future<bool> _saveMessage(Map<String, dynamic> payload) async{
     var q = where.eq(_uuid, _uuidStr);
     var u = modify.push(_messages, payload);
-    var r = await _collection.update(q, u);
-    log('Added new msg to conversation $_uuidStr: $r');
-    return r['n'] == 1;
+    var r = await _collection.updateOne(q, u);
+    log('Added new msg to conversation $_uuidStr, result: ${r.isSuccess}');
+    return r.isSuccess;
   }
 
   @override
@@ -104,6 +106,6 @@ class MongoDbStorage implements IStorage{
 
   @override
   Future<bool> answer(OpenAIChatCompletionModel msg) {
-    return _saveMessage({_fromAi: false, _answer: msg.toMap()});
+    return _saveMessage({_fromAi: true, _answer: msg.toMap()});
   }
 }

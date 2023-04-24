@@ -26,6 +26,7 @@ class OpenAIChatState extends State<OpenAIChat> {
 
   static const _prompt = 'AI tutor,answer my question concisely without elaboration';
 
+  int i = 1;
   Future<String> _getOpenAiResponse(List<_Message> messages) async{
     final first = OpenAIChatCompletionChoiceMessageModel(
       content: _prompt,
@@ -39,6 +40,27 @@ class OpenAIChatState extends State<OpenAIChat> {
           role: OpenAIChatMessageRole.user,
         )).toList(growable: false)]
     );
+    /*
+    var d = {
+      "id": "chatcmpl-123",
+      "object": "chat.completion",
+      "created": 1677652288,
+      "choices": [{
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Hello there, ${i++}",
+        },
+        "finish_reason": "stop"
+      }],
+      "usage": {
+        "prompt_tokens": 9,
+        "completion_tokens": 12,
+        "total_tokens": 21
+      }
+    };
+    var completions = OpenAIChatCompletionModel.fromMap(d);
+    */
     storage.answer(completions);
     return completions.choices[0].message.content;
   }
@@ -107,15 +129,29 @@ class OpenAIChatState extends State<OpenAIChat> {
               IconButton(
                 icon: const Icon(Icons.send),
                 onPressed: () {
-                  if(_curConversationId == null){
-                    storage.newConversation(["test"], "mu", _textController.text)
+                  var q = _textController.text.trim();
+                  if(q.isNotEmpty) {
+                    if (_curConversationId == null) {
+                      storage.newConversation(
+                          ["test"], "mu", q)
                       .then((value) {
                         _curConversationId = value;
-                        _sendMessage(context, _textController.text);
+                        _sendMessage(context, q);
                         _textController.clear();
-
                       })
-                      .catchError((e) { showErrorDialog(context, e.toString()); });
+                      .catchError((e) {
+                        showErrorDialog(context, e.toString());
+                      });
+                    }
+                    else {
+                      storage.question(q).then((_){
+                        _sendMessage(context, q);
+                        _textController.clear();
+                      })
+                      .catchError((e) {
+                        showErrorDialog(context, e.toString());
+                      });
+                    }
                   }
                 },
               ),
