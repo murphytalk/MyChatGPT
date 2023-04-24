@@ -88,8 +88,12 @@ class OpenAIChatState extends State<OpenAIChat> {
               IconButton(
                 icon: const Icon(Icons.add_circle),
                 onPressed: () {
-                  _curConversationId = storage.newConversation([], "mu", _textController.text);
-                  _textController.clear();
+                  storage.newConversation([], "mu", _textController.text)
+                  .then((v){
+                    _curConversationId = v;
+                    _textController.clear();
+                  })
+                  .catchError((e) { showErrorDialog(context, e.toString()); });
                 },
               ),
               Expanded(
@@ -103,9 +107,16 @@ class OpenAIChatState extends State<OpenAIChat> {
               IconButton(
                 icon: const Icon(Icons.send),
                 onPressed: () {
-                  _curConversationId ??= storage.newConversation(["test"], "mu", _textController.text);
-                  _sendMessage(context, _textController.text);
-                  _textController.clear();
+                  if(_curConversationId == null){
+                    storage.newConversation(["test"], "mu", _textController.text)
+                      .then((value) {
+                        _curConversationId = value;
+                        _sendMessage(context, _textController.text);
+                        _textController.clear();
+
+                      })
+                      .catchError((e) { showErrorDialog(context, e.toString()); });
+                  }
                 },
               ),
             ],

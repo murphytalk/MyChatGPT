@@ -7,9 +7,9 @@ import 'package:my_chat_gpt/utils.dart';
 abstract class IStorage{
   Future<bool> connect();
   Future<void> close();
-  String newConversation(List<String> tags, String owner, String topic);
-  Future<void> question(String msg);
-  Future<void> answer(OpenAIChatCompletionModel msg);
+  Future<String> newConversation(List<String> tags, String owner, String topic);
+  Future<bool> question(String msg);
+  Future<bool> answer(OpenAIChatCompletionModel msg);
 }
 
 class MongoDbStorage implements IStorage{
@@ -22,35 +22,36 @@ class MongoDbStorage implements IStorage{
   static const _owner = 'owner';
   static const _topic = 'topic';
   static const _fromAi = 'from_ai';
-  static const _meta = 'meta';
   static const _uuid = 'uuid';
   static const _question = 'question';
   static const _answer = 'answer';
+  static const _created = 'created';
+  static const _messages = 'messages';
 
   late String _uuidStr;
   late Db _db;
   late DbCollection _collection;
   late DbCollection _settingsCollection;
-  late Map<String, dynamic> _metaObj;
 
   final Set<String> _knownTags = {};
 
   @override
-  String newConversation(List<String> tags, String owner, String topic) {
+  Future<String> newConversation(List<String> tags, String owner, String topic) async{
     _uuidStr = const Uuid().v1();
-    _metaObj = {_uuid: _uuidStr , _tags: tags, _owner: owner, _topic: topic};
+    var doc = {_uuid: _uuidStr , _tags: tags, _owner: owner, _topic: topic,
+      _created: DateTime.now().microsecondsSinceEpoch,
+      _messages: []
+    };
+    var r = await _collection.insert(doc);
+    log('new conversation saved: $r');
     saveTags(tags.toSet());
     return _uuidStr;
-  }
-
-  Future<void> _saveToDb(Map<String, dynamic> payload) async {
-    await _collection.insert(payload);
   }
 
   Future<void> saveTags(Set<String> tags) async{
     if(tags.isEmpty) return Future.value();
 
-    var q = where.eq('$_meta.$_uuid',_uuidStr);
+    var q = where.eq(_uuid,_uuidStr);
     var u = modify.set(_tags, tags);
     var r = await _collection.update(q, u);
     log('Updated $_uuidStr tags : $r');
@@ -74,12 +75,12 @@ class MongoDbStorage implements IStorage{
     }
   }
 
-  @override
-  Future<void> answer(OpenAIChatCompletionModel msg) async{
-    Map<String, dynamic> payload = {_meta: _metaObj};
-    payload[_answer] = msg.toMap();
-    payload[_fromAi] = true;
-    _saveToDb(payload);
+  Future<bool> _saveMessage(Map<String, dynamic> payload) async{
+    var q = where.eq(_uuid, _uuidStr);
+    var u = modify.push(_messages, payload);
+    var r = await _collection.update(q, u);
+    log('Added new msg to conversation $_uuidStr: $r');
+    return r['n'] == 1;
   }
 
   @override
@@ -97,10 +98,12 @@ class MongoDbStorage implements IStorage{
   }
 
   @override
-  Future<void> question(String msg) async{
-    Map<String, dynamic> payload = {_meta: _metaObj};
-    payload[_fromAi] = false;
-    payload[_question] = msg;
-    _saveToDb(payload);
+  Future<bool> question(String msg){
+    return _saveMessage({_fromAi: false, _question: msg});
+  }
+
+  @override
+  Future<bool> answer(OpenAIChatCompletionModel msg) {
+    return _saveMessage({_fromAi: false, _answer: msg.toMap()});
   }
 }
