@@ -24,14 +24,20 @@ class OpenAIChatState extends State<OpenAIChat> {
   final List<_Message> _messages = [];
   String? _curConversationId;
 
+  static const _prompt = 'AI tutor,answer my question concisely without elaboration';
+
   Future<String> _getOpenAiResponse(List<_Message> messages) async{
+    final first = OpenAIChatCompletionChoiceMessageModel(
+      content: _prompt,
+      role: OpenAIChatMessageRole.user,
+    );
     final completions = await OpenAI.instance.chat.create(
         model: "gpt-3.5-turbo",
-        messages: messages.map( (m) =>
+        messages: [first, ... messages.map( (m) =>
           OpenAIChatCompletionChoiceMessageModel(
             content: m.content,
           role: OpenAIChatMessageRole.user,
-        )).toList(growable: false)
+        )).toList(growable: false)]
     );
     storage.answer(completions);
     return completions.choices[0].message.content;
@@ -79,6 +85,13 @@ class OpenAIChatState extends State<OpenAIChat> {
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
+              IconButton(
+                icon: const Icon(Icons.add_circle),
+                onPressed: () {
+                  _curConversationId = storage.newConversation([], "mu", _textController.text);
+                  _textController.clear();
+                },
+              ),
               Expanded(
                 child: TextField(
                   controller: _textController,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as dev;
 
 void showErrorDialog(BuildContext context, String error) {
   showDialog(
@@ -39,4 +40,8 @@ class AwaitWidget extends StatelessWidget {
               child: Directionality(textDirection: TextDirection.ltr, child: Text(caption))))
     ]);
   }
+}
+
+void log(String msg){
+  dev.log(msg, time:DateTime.now());
 }
