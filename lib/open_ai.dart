@@ -18,6 +18,7 @@ class _Message{
   const _Message({required this.fromAI, required this.content});
 }
 
+const _mockAi = true;
 
 class OpenAIChatState extends State<OpenAIChat> {
   final TextEditingController _textController = TextEditingController();
@@ -32,7 +33,30 @@ class OpenAIChatState extends State<OpenAIChat> {
       content: _prompt,
       role: OpenAIChatMessageRole.user,
     );
-    final completions = await OpenAI.instance.chat.create(
+    OpenAIChatCompletionModel completions;
+    if(_mockAi) {
+      var d = {
+        "id": "chatcmpl-123",
+        "object": "chat.completion",
+        "created": 1677652288,
+        "choices": [{
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Hello there, ${i++}",
+          },
+          "finish_reason": "stop"
+        }
+        ],
+        "usage": {
+          "prompt_tokens": 9,
+          "completion_tokens": 12,
+          "total_tokens": 21
+        }
+      };
+      completions = OpenAIChatCompletionModel.fromMap(d);
+    }else{
+      completions = await OpenAI.instance.chat.create(
         model: "gpt-3.5-turbo",
         messages: [first, ... messages.map( (m) =>
           OpenAIChatCompletionChoiceMessageModel(
@@ -40,28 +64,8 @@ class OpenAIChatState extends State<OpenAIChat> {
           role: OpenAIChatMessageRole.user,
         )).toList(growable: false)]
     );
-    /*
-    var d = {
-      "id": "chatcmpl-123",
-      "object": "chat.completion",
-      "created": 1677652288,
-      "choices": [{
-        "index": 0,
-        "message": {
-          "role": "assistant",
-          "content": "Hello there, ${i++}",
-        },
-        "finish_reason": "stop"
-      }],
-      "usage": {
-        "prompt_tokens": 9,
-        "completion_tokens": 12,
-        "total_tokens": 21
-      }
-    };
-    var completions = OpenAIChatCompletionModel.fromMap(d);
-    */
-    storage.answer(completions);
+   }
+     storage.answer(completions);
     return completions.choices[0].message.content;
   }
 
@@ -110,6 +114,7 @@ class OpenAIChatState extends State<OpenAIChat> {
               IconButton(
                 icon: const Icon(Icons.add_circle),
                 onPressed: () {
+                  _textController.clear();
                   storage.newConversation([], "mu", _textController.text)
                   .then((v){
                     _curConversationId = v;
