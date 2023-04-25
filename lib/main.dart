@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dart_openai/openai.dart';
+import 'package:my_chat_gpt/history.dart';
 import 'package:my_chat_gpt/storage.dart';
 import 'package:my_chat_gpt/utils.dart';
 import 'env/env.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
                 routes: {
                   '/': (c) => AvatarScreen(users: users),
                   '/home': (c) => const MyHomePage(title: 'My ChatGPT'),
+                  '/history': (c) => const HistoryScreen(),
                 },
                 theme: ThemeData(
                   primarySwatch: Colors.blue,
@@ -146,9 +148,10 @@ class _MyHomePageState extends State<MyHomePage>{
                child: Text(_user.fullName[0], style: const TextStyle(fontSize: 32.0)),
              ),
            ),
-           const ListTile(
-             leading: Icon(Icons.history),
-             title: Text('History'),
+           ListTile(
+             leading: const Icon(Icons.history),
+             title: const Text('History'),
+             onTap: () => Navigator.pushNamed(context, '/history')
            ),
          ],
        )

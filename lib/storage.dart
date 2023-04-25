@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:my_chat_gpt/env/env.dart';
 import 'package:my_chat_gpt/utils.dart';
+import 'package:tuple/tuple.dart';
 
 @immutable
 class User{
@@ -27,6 +28,8 @@ abstract class IStorage{
   Future<bool> question(String msg);
   Future<bool> answer(OpenAIChatCompletionModel msg);
   Future<List<User>> getUsers();
+  //uuid,topic
+  Future<List<Tuple2<String,String>>> getHistory(int limit, int skip);
 }
 
 class MongoDbStorage implements IStorage{
@@ -140,5 +143,12 @@ class MongoDbStorage implements IStorage{
     catch(e) {
       return Future.error(e);
     }
+  }
+
+  @override
+  Future<List<Tuple2<String, String>>> getHistory(int limit, int skip) async{
+    final q = _collection.find(where.fields([_uuid, _topic]).sortBy('created', descending: true).limit(limit).skip(skip));
+    final snapshot = await q.toList();
+    return snapshot.map((e) => Tuple2(e[_uuid] as String, e[_topic] as String)).toList();
   }
 }
