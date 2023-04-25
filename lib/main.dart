@@ -33,10 +33,14 @@ class MyApp extends StatelessWidget {
               final  users = dbConnected.data ?? [];
               child = MaterialApp(
                 title: 'My AI Agent',
+                initialRoute: '/',
+                routes: {
+                  '/': (c) => AvatarScreen(users: users),
+                  '/home': (c) => const MyHomePage(title: 'My ChatGPT'),
+                },
                 theme: ThemeData(
                   primarySwatch: Colors.blue,
                 ),
-                home: MyHomePage(title: 'My ChatGPT', users: users),
               );
             } else if (dbConnected.hasError){
               child = Center(
@@ -61,17 +65,57 @@ class MyApp extends StatelessWidget {
     }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title, required this.users});
-  final String title;
+
+class AvatarScreen extends StatefulWidget {
   final List<User> users;
+  const AvatarScreen({super.key, required this.users});
+
+  @override
+  _AvatarScreenState createState() => _AvatarScreenState();
+}
+
+class _AvatarScreenState extends State<AvatarScreen> {
+  int _selected = 0;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Who Are You?'),
+      ),
+      body: ListView.builder(
+        itemCount: widget.users.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Padding(padding: const EdgeInsets.symmetric(vertical: 10.0),
+            child: ListTile(
+            leading: CircleAvatar(
+              child: Text(widget.users[index].name[0], style: const TextStyle(fontSize: 26.0),),
+            ),
+            title: Text(widget.users[index].fullName, style: const TextStyle(fontSize: 32.0),),
+            selected: _selected == index,
+            onTap: () {
+              setState(() {
+                _selected = index;
+              });
+              Navigator.pushReplacementNamed(context, '/home', arguments: {'user': widget.users[index]});
+            },
+          ));
+        },
+      ),
+    );
+  }
+}
+
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+  final String title;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage>{
-
+  late User _user;
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -80,26 +124,31 @@ class _MyHomePageState extends State<MyHomePage>{
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+
+// Extract the arguments from the ModalRoute settings.
+    final Object? args = ModalRoute.of(context)?.settings.arguments;
+    if(args == null){
+      showErrorDialog(context, "Something went wrong, I don't know who you are!");
+    }
+    else{
+        _user = (args as Map<String, dynamic>)['user'] as User;
+    }
     return Scaffold(
       drawer: Drawer(
        child: ListView(
          padding: EdgeInsets.zero,
-         children: const <Widget>[
+         children: <Widget>[
            DrawerHeader(
-             decoration: BoxDecoration(
+             decoration: const BoxDecoration(
                color: Colors.blue,
              ),
-             child: Text(
-               'Drawer Header',
-               style: TextStyle(
-                 color: Colors.white,
-                 fontSize: 24,
-               ),
+             child: CircleAvatar(
+               child: Text(_user.fullName[0], style: const TextStyle(fontSize: 32.0)),
              ),
            ),
-           ListTile(
-             leading: Icon(Icons.message),
-             title: Text('Messages'),
+           const ListTile(
+             leading: Icon(Icons.history),
+             title: Text('History'),
            ),
          ],
        )
