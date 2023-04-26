@@ -14,6 +14,13 @@ void main() {
 
 final IStorage storage = MongoDbStorage();
 
+class AppState {
+  static final AppState _singleton = AppState._internal();
+
+  factory AppState() { return _singleton; }
+  AppState._internal();
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
