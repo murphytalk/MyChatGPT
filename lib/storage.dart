@@ -19,6 +19,9 @@ class User{
   factory User.fromMap(String userName, Map<String, dynamic> json) {
     return User(name: userName, fullName: json['name']);
   }
+  factory User.defaultUser(){
+    return const User(name: "me", fullName: "");
+  }
 }
 
 abstract class IStorage{

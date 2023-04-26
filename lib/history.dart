@@ -68,7 +68,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               setState(() {
                 _selected = index;
               });
-              //Navigator.pop(context, {'uuid':document.item1});
+              AppState().curConversationId = document.item1;
               Navigator.popUntil(context, ModalRoute.withName("/home"));
             },
           );

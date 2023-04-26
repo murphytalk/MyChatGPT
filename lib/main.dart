@@ -16,10 +16,13 @@ final IStorage storage = MongoDbStorage();
 
 class AppState {
   static final AppState _singleton = AppState._internal();
+  User user = User.defaultUser();
+  String curConversationId = "";
 
   factory AppState() { return _singleton; }
   AppState._internal();
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -105,7 +108,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
               setState(() {
                 _selected = index;
               });
-              Navigator.pushReplacementNamed(context, '/home', arguments: {'user': widget.users[index]});
+              AppState().user = widget.users[index];
+              Navigator.pushReplacementNamed(context, '/home');
             },
           ));
         },
@@ -124,7 +128,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage>{
-  late User _user;
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -133,22 +136,6 @@ class _MyHomePageState extends State<MyHomePage>{
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-
-// Extract the arguments from the ModalRoute settings.
-    final Object? args = ModalRoute.of(context)?.settings.arguments;
-    if(args == null){
-      showErrorDialog(context, "Something went wrong, I don't know who you are!");
-    }
-    else{
-      final a = args as Map<String, dynamic>;
-      if(a.containsKey('user')) {
-        _user = a['user'] as User;
-      }
-      if(a.containsKey('uuid')){
-        final String uuid = a['uuid'];
-        dev.log('Loading conversation $uuid');
-      }
-    }
     return Scaffold(
       drawer: Drawer(
        child: ListView(
@@ -159,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage>{
                color: Colors.blue,
              ),
              child: CircleAvatar(
-               child: Text(_user.fullName[0], style: const TextStyle(fontSize: 32.0)),
+               child: Text(AppState().user.fullName[0], style: const TextStyle(fontSize: 32.0)),
              ),
            ),
            ListTile(
