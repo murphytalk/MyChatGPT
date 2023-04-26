@@ -133,7 +133,14 @@ class _MyHomePageState extends State<MyHomePage>{
       showErrorDialog(context, "Something went wrong, I don't know who you are!");
     }
     else{
-        _user = (args as Map<String, dynamic>)['user'] as User;
+      final a = args as Map<String, dynamic>;
+      if(a.containsKey('user')) {
+        _user = a['user'] as User;
+      }
+      if(a.containsKey('uuid')){
+        final String uuid = a['uuid'];
+        dev.log('Loading conversation $uuid');
+      }
     }
     return Scaffold(
       drawer: Drawer(

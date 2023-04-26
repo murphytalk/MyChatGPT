@@ -10,42 +10,36 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  final List<Tuple2<String, String>> _history = [];
-  static const _itemsPerPage = 20;
-  int _loadedItemsCount = 0;
-  bool _isLoadingMoreItems = false;
-
-  Future<void> _loadItems() async {
-    final result = await storage.getHistory(_itemsPerPage, _loadedItemsCount);
-
-    setState(() {
-      _history.addAll(result);
-      _loadedItemsCount += result.length;
-    });
-  }
-
-  Future<void> _loadMoreItems() async {
-    if (_isLoadingMoreItems) {
-      return;
-    }
-
-    setState(() {
-      _isLoadingMoreItems = true;
-    });
-
-    final result = await storage.getHistory(_itemsPerPage, _loadedItemsCount);
-
-    setState(() {
-      _history.addAll(result);
-      _loadedItemsCount += result.length;
-      _isLoadingMoreItems = false;
-    });
-  }
+  final ScrollController _scrollController = ScrollController();
+  final List<Tuple2<String, String>> _documents = [];
+  bool _isLoading = false;
+  int _skip = 0;
+  int _limit = 20;
+  int _selected = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadItems();
+    _getDocuments();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
+        _getDocuments();
+      }
+    });
+  }
+
+  Future<void> _getDocuments() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+    });
+    final documents = await storage.getHistory(_limit, _skip);
+    setState(() {
+      _isLoading = false;
+      _documents.addAll(documents);
+      _skip += documents.length;
+    });
   }
 
   @override
@@ -55,36 +49,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
         title: const Text('History'),
       ),
       body: ListView.builder(
-        itemCount: _history.length + 1,
-        itemBuilder: (BuildContext context, int index) {
-          if (index == _history.length) {
-            _loadMoreItems();
-            return SizedBox(
-              height: 40,
-              width: 40,
-              child: Center(
-                child: _isLoadingMoreItems
-                    ? const CircularProgressIndicator()
-                    : null,
-              ),
+        controller: _scrollController,
+        itemCount: _documents.length + (_isLoading ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _documents.length && _isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
             );
           }
-
-          final item = _history[index];
-          final uuid = item.item1;
-          final topic = item.item2;
-
+          final document = _documents[index];
           return ListTile(
             title: Text(
-              topic,
+              document.item2,
               overflow: TextOverflow.ellipsis,
             ),
+            selected: _selected == index,
             onTap: () {
-              Navigator.pushNamed(
-                context,
-                '/conversation',
-                arguments: uuid,
-              );
+              setState(() {
+                _selected = index;
+              });
+              //Navigator.pop(context, {'uuid':document.item1});
+              Navigator.popUntil(context, ModalRoute.withName("/home"));
             },
           );
         },
