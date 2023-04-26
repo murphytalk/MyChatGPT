@@ -17,10 +17,14 @@ final IStorage storage = MongoDbStorage();
 class AppState {
   static final AppState _singleton = AppState._internal();
   User user = User.defaultUser();
-  String curConversationId = "";
+  ConversationInfo curConversation = ConversationInfo.empty();
 
   factory AppState() { return _singleton; }
   AppState._internal();
+
+  static const routeRoot = '/';
+  static const routeHome = '/h';
+  static const routeHistory = '/hist';
 }
 
 
@@ -44,11 +48,11 @@ class MyApp extends StatelessWidget {
               final  users = dbConnected.data ?? [];
               child = MaterialApp(
                 title: 'My AI Agent',
-                initialRoute: '/',
+                initialRoute: AppState.routeRoot,
                 routes: {
-                  '/': (c) => AvatarScreen(users: users),
-                  '/home': (c) => const MyHomePage(title: 'My ChatGPT'),
-                  '/history': (c) => const HistoryScreen(),
+                  AppState.routeRoot :   (c) => AvatarScreen(users: users),
+                  AppState.routeHome :   (c) => const MyHomePage(title: 'My ChatGPT'),
+                  AppState.routeHistory: (c) => const HistoryScreen(),
                 },
                 theme: ThemeData(
                   primarySwatch: Colors.blue,
@@ -109,7 +113,7 @@ class _AvatarScreenState extends State<AvatarScreen> {
                 _selected = index;
               });
               AppState().user = widget.users[index];
-              Navigator.pushReplacementNamed(context, '/home');
+              Navigator.pushReplacementNamed(context, AppState.routeHome);
             },
           ));
         },
@@ -130,8 +134,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>{
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
+    // This method is rerun every time setState is called
     //
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
@@ -152,7 +155,7 @@ class _MyHomePageState extends State<MyHomePage>{
            ListTile(
              leading: const Icon(Icons.history),
              title: const Text('History'),
-             onTap: () => Navigator.pushNamed(context, '/history')
+             onTap: () => Navigator.pushNamed(context, AppState.routeHistory)
            ),
          ],
        )

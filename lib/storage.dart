@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:my_chat_gpt/env/env.dart';
 import 'package:my_chat_gpt/utils.dart';
-import 'package:tuple/tuple.dart';
 
 @immutable
 class User{
@@ -24,6 +23,35 @@ class User{
   }
 }
 
+@immutable
+class Message{
+  final bool fromAI;
+  final String content;
+  const Message({required this.fromAI, required this.content});
+}
+
+@immutable
+class ConversationInfo{
+  final String uuid;
+  final String topic;
+  const ConversationInfo({required this.uuid, required this.topic});
+  factory ConversationInfo.empty(){
+    return const ConversationInfo(uuid: "", topic: "");
+  }
+}
+
+class Conversation{
+  final String uuid;
+  final List<String> tags;
+  final User owner;
+  final DateTime created;
+  final List<Message> messages;
+  DateTime lastUpdated;
+  String topic;
+  Conversation({required this.uuid, required this.topic, required this.tags, required this.owner, required this.created, required this.messages})
+        :lastUpdated = created;
+}
+
 abstract class IStorage{
   Future<bool> connect();
   Future<void> close();
@@ -31,8 +59,8 @@ abstract class IStorage{
   Future<bool> question(String msg);
   Future<bool> answer(OpenAIChatCompletionModel msg);
   Future<List<User>> getUsers();
-  //uuid,topic
-  Future<List<Tuple2<String,String>>> getHistory(int limit, int skip);
+  Future<List<ConversationInfo>> getHistory(int limit, int skip);
+  //Future<List<String>> getConversationContent(String uuid);
 }
 
 class MongoDbStorage implements IStorage{
@@ -149,9 +177,18 @@ class MongoDbStorage implements IStorage{
   }
 
   @override
-  Future<List<Tuple2<String, String>>> getHistory(int limit, int skip) async{
+  Future<List<ConversationInfo>> getHistory(int limit, int skip) async{
     final q = _collection.find(where.fields([_uuid, _topic]).sortBy('created', descending: true).limit(limit).skip(skip));
     final snapshot = await q.toList();
-    return snapshot.map((e) => Tuple2(e[_uuid] as String, e[_topic] as String)).toList();
+    return snapshot.map((e) => ConversationInfo(uuid: e[_uuid] as String, topic:e[_topic] as String)).toList();
   }
+/*
+  @override
+  Future<List<String>> getConversationContent(String uuid) async{
+    final q = where.eq(_uuid, uuid);
+    var doc = await _collection.findOne(q);
+    if(doc == null) return [];
+
+  }
+ */
 }

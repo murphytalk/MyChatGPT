@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_chat_gpt/main.dart';
-import 'package:tuple/tuple.dart';
+import 'package:my_chat_gpt/storage.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -11,10 +11,10 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final ScrollController _scrollController = ScrollController();
-  final List<Tuple2<String, String>> _documents = [];
+  final List<ConversationInfo> _documents = [];
+  static const int _limit = 20;
   bool _isLoading = false;
   int _skip = 0;
-  int _limit = 20;
   int _selected = 0;
 
   @override
@@ -60,7 +60,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           final document = _documents[index];
           return ListTile(
             title: Text(
-              document.item2,
+              document.topic,
               overflow: TextOverflow.ellipsis,
             ),
             selected: _selected == index,
@@ -68,8 +68,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
               setState(() {
                 _selected = index;
               });
-              AppState().curConversationId = document.item1;
-              Navigator.popUntil(context, ModalRoute.withName("/home"));
+              AppState().curConversation = document;
+              Navigator.popUntil(context, ModalRoute.withName(AppState.routeHome));
             },
           );
         },

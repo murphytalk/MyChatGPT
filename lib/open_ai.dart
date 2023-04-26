@@ -2,6 +2,7 @@ import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_chat_gpt/main.dart';
+import 'package:my_chat_gpt/storage.dart';
 import 'package:my_chat_gpt/utils.dart';
 
 class OpenAIChat extends StatefulWidget {
@@ -11,52 +12,23 @@ class OpenAIChat extends StatefulWidget {
   OpenAIChatState createState() => OpenAIChatState();
 }
 
-@immutable
-class _Message{
-  final bool fromAI;
-  final String content;
-  const _Message({required this.fromAI, required this.content});
-}
-
-const _mockAi = true;
 
 class OpenAIChatState extends State<OpenAIChat> {
   final TextEditingController _textController = TextEditingController();
-  final List<_Message> _messages = [];
+  final List<Message> _messages = [];
   String? _curConversationId;
+  bool _thinking = false;
 
   static const _prompt = 'AI tutor,answer my question concisely without elaboration';
 
   int i = 1;
-  Future<String> _getOpenAiResponse(List<_Message> messages) async{
+  Future<String> _getOpenAiResponse(List<Message> messages) async{
+
     final first = OpenAIChatCompletionChoiceMessageModel(
       content: _prompt,
       role: OpenAIChatMessageRole.user,
     );
-    OpenAIChatCompletionModel completions;
-    if(_mockAi) {
-      var d = {
-        "id": "chatcmpl-123",
-        "object": "chat.completion",
-        "created": 1677652288,
-        "choices": [{
-          "index": 0,
-          "message": {
-            "role": "assistant",
-            "content": "Hello there, ${i++}",
-          },
-          "finish_reason": "stop"
-        }
-        ],
-        "usage": {
-          "prompt_tokens": 9,
-          "completion_tokens": 12,
-          "total_tokens": 21
-        }
-      };
-      completions = OpenAIChatCompletionModel.fromMap(d);
-    }else{
-      completions = await OpenAI.instance.chat.create(
+    final completions = await OpenAI.instance.chat.create(
         model: "gpt-3.5-turbo",
         messages: [first, ... messages.map( (m) =>
           OpenAIChatCompletionChoiceMessageModel(
@@ -64,20 +36,26 @@ class OpenAIChatState extends State<OpenAIChat> {
           role: OpenAIChatMessageRole.user,
         )).toList(growable: false)]
     );
-   }
-     storage.answer(completions);
+    storage.answer(completions);
     return completions.choices[0].message.content;
   }
 
   void _sendMessage(BuildContext ctx,String message) async {
     setState(() {
-      storage.question(message);
-      _messages.add(_Message(fromAI: false, content: message));
+      _messages.add(Message(fromAI: false, content: message));
     });
+
+    storage.question(message);
+
+    setState(() {
+       _thinking = true;
+    });
+
     try {
       final response = await _getOpenAiResponse(_messages);
       setState(() {
-        _messages.add(_Message(fromAI: true, content: response));
+        _thinking = false;
+        _messages.add(Message(fromAI: true, content: response));
       });
     }
     catch(e){
@@ -88,6 +66,7 @@ class OpenAIChatState extends State<OpenAIChat> {
 
   @override
   Widget build(BuildContext context) {
+    if(_thinking) return const Center(child: AwaitWidget(caption: "Thinking ..."));
     return Column(
       children: [
         Expanded(
@@ -138,11 +117,11 @@ class OpenAIChatState extends State<OpenAIChat> {
                   if(q.isNotEmpty) {
                     if (_curConversationId == null) {
                       storage.newConversation(
-                          ["test"], "mu", q)
+                          [], AppState().user.name, q)
                       .then((value) {
                         _curConversationId = value;
-                        _sendMessage(context, q);
                         _textController.clear();
+                        _sendMessage(context, q);
                       })
                       .catchError((e) {
                         showErrorDialog(context, e.toString());
