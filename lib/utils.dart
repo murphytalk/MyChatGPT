@@ -37,19 +37,21 @@ class AwaitWidget extends StatelessWidget {
           textAlign: TextAlign.center,
           child: Padding(
               padding: const EdgeInsets.only(top: 16),
-              child: Directionality(textDirection: TextDirection.ltr, child: Text(caption))))
+              child: Directionality(
+                  textDirection: TextDirection.ltr, child: Text(caption))))
     ]);
   }
 }
 
-void log(String msg){
-  dev.log(msg, time:DateTime.now());
+void log(String msg) {
+  dev.log(msg, time: DateTime.now());
 }
 
 class ErrorAlertScreen extends StatelessWidget {
   final String errorMessage;
 
-  const ErrorAlertScreen({Key? key, required this.errorMessage}) : super(key: key);
+  const ErrorAlertScreen({Key? key, required this.errorMessage})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -57,21 +59,21 @@ class ErrorAlertScreen extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.warning_amber_rounded,
             size: 100,
             color: Colors.orangeAccent,
           ),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
           Text(
             errorMessage,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Close'),
+            child: const Text('Close'),
           ),
         ],
       ),

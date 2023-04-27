@@ -118,8 +118,8 @@ class _OpenAIChatState extends State<OpenAIChat> with RouteAware {
                 icon: const Icon(Icons.add_circle),
                 onPressed: () {
                   _textController.clear();
-                  storage.newConversation([], "mu", _textController.text).then(
-                      (v) {
+                  storage.newConversation(
+                      [], AppState().user.name, _textController.text).then((v) {
                     _curConversationId = v;
                     _textController.clear();
                   }).catchError((e) {
@@ -170,7 +170,12 @@ class _OpenAIChatState extends State<OpenAIChat> with RouteAware {
   @override
   Widget build(BuildContext context) {
     if (_thinking) {
-      return const Center(child: AwaitWidget(caption: "Thinking ..."));
+      return Container(
+        color: Colors.black.withOpacity(0.5),
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     if (_loadConversation && AppState().conversationToLoad.isNotEmpty) {

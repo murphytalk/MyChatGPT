@@ -6,10 +6,10 @@ class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
   @override
-  _HistoryScreenState createState() => _HistoryScreenState();
+  HistoryScreenState createState() => HistoryScreenState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen> {
+class HistoryScreenState extends State<HistoryScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<ConversationInfo> _documents = [];
   static const int _limit = 20;
@@ -34,7 +34,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() {
       _isLoading = true;
     });
-    final documents = await storage.getHistory(_limit, _skip);
+    final documents = await storage.getHistory(AppState().user, _limit, _skip);
     setState(() {
       _isLoading = false;
       _documents.addAll(documents);
@@ -69,7 +69,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 _selected = index;
               });
               AppState().conversationToLoad = document;
-              Navigator.popUntil(context, ModalRoute.withName(AppState.routeHome));
+              Navigator.popUntil(
+                  context, ModalRoute.withName(AppState.routeHome));
             },
           );
         },

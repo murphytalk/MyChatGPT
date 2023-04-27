@@ -5,7 +5,6 @@ import 'package:my_chat_gpt/storage.dart';
 import 'package:my_chat_gpt/utils.dart';
 import 'env/env.dart';
 import 'open_ai.dart';
-import 'dart:developer' as dev;
 
 void main() {
   OpenAI.apiKey = Env.openApiKey;
@@ -21,7 +20,9 @@ class AppState {
   User user = User.defaultUser();
   ConversationInfo conversationToLoad = ConversationInfo.empty();
 
-  factory AppState() { return _singleton; }
+  factory AppState() {
+    return _singleton;
+  }
   AppState._internal();
 
   static const routeRoot = '/';
@@ -29,43 +30,44 @@ class AppState {
   static const routeHistory = '/hist';
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  Future<List<User>> _bootstrap() async{
+  Future<List<User>> _bootstrap() async {
     var connected = await storage.connect();
-    if(!connected) throw Exception("Failed to connect to db");
+    if (!connected) throw Exception("Failed to connect to db");
     return storage.getUsers();
   }
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-      return FutureBuilder(
-          future: _bootstrap(),
-          builder: (ctx, AsyncSnapshot<List<User>> dbConnected) {
-            Widget child;
-            if (dbConnected.hasData) {
-              final  users = dbConnected.data ?? [];
-              child = MaterialApp(
-                title: 'My AI Agent',
-                initialRoute: AppState.routeRoot,
-                routes: {
-                  AppState.routeRoot :   (c) => AvatarScreen(users: users),
-                  AppState.routeHome :   (c) => const MyHomePage(title: 'My ChatGPT'),
-                  AppState.routeHistory: (c) => const HistoryScreen(),
-                },
-                navigatorObservers: [routeObserver],
-                theme: ThemeData(
-                  primarySwatch: Colors.blue,
-                ),
-              );
-            } else if (dbConnected.hasError){
-              child = Center(
-                  child: Column(
+    return FutureBuilder(
+        future: _bootstrap(),
+        builder: (ctx, AsyncSnapshot<List<User>> dbConnected) {
+          Widget child;
+          if (dbConnected.hasData) {
+            final users = dbConnected.data ?? [];
+            child = MaterialApp(
+              title: 'My AI Agent',
+              initialRoute: AppState.routeRoot,
+              routes: {
+                AppState.routeRoot: (c) => _AvatarScreen(users: users),
+                AppState.routeHome: (c) =>
+                    const MyHomePage(title: 'My ChatGPT'),
+                AppState.routeHistory: (c) => const HistoryScreen(),
+              },
+              navigatorObservers: [routeObserver],
+              theme: ThemeData(
+                primarySwatch: Colors.blue,
+              ),
+            );
+          } else if (dbConnected.hasError) {
+            child = Center(
+                child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children:[const Icon(
+                    children: [
+                  const Icon(
                     Icons.error_outline,
                     color: Colors.red,
                     size: 60,
@@ -75,25 +77,23 @@ class MyApp extends StatelessWidget {
                     child: Text('Error: ${dbConnected.error}'),
                   ),
                 ]));
-            }
-            else {
-              child = const AwaitWidget(caption: "Connecting ...");
-            }
-            return Center(child: child);
-          });
-    }
+          } else {
+            child = const AwaitWidget(caption: "Connecting ...");
+          }
+          return Center(child: child);
+        });
+  }
 }
 
-
-class AvatarScreen extends StatefulWidget {
+class _AvatarScreen extends StatefulWidget {
   final List<User> users;
-  const AvatarScreen({super.key, required this.users});
+  const _AvatarScreen({required this.users});
 
   @override
   _AvatarScreenState createState() => _AvatarScreenState();
 }
 
-class _AvatarScreenState extends State<AvatarScreen> {
+class _AvatarScreenState extends State<_AvatarScreen> {
   int _selected = 0;
   @override
   Widget build(BuildContext context) {
@@ -104,27 +104,33 @@ class _AvatarScreenState extends State<AvatarScreen> {
       body: ListView.builder(
         itemCount: widget.users.length,
         itemBuilder: (BuildContext context, int index) {
-          return Padding(padding: const EdgeInsets.symmetric(vertical: 10.0),
-            child: ListTile(
-            leading: CircleAvatar(
-              child: Text(widget.users[index].name[0], style: const TextStyle(fontSize: 26.0),),
-            ),
-            title: Text(widget.users[index].fullName, style: const TextStyle(fontSize: 32.0),),
-            selected: _selected == index,
-            onTap: () {
-              setState(() {
-                _selected = index;
-              });
-              AppState().user = widget.users[index];
-              Navigator.pushReplacementNamed(context, AppState.routeHome);
-            },
-          ));
+          return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10.0),
+              child: ListTile(
+                leading: CircleAvatar(
+                  child: Text(
+                    widget.users[index].name[0],
+                    style: const TextStyle(fontSize: 26.0),
+                  ),
+                ),
+                title: Text(
+                  widget.users[index].fullName,
+                  style: const TextStyle(fontSize: 32.0),
+                ),
+                selected: _selected == index,
+                onTap: () {
+                  setState(() {
+                    _selected = index;
+                  });
+                  AppState().user = widget.users[index];
+                  Navigator.pushReplacementNamed(context, AppState.routeHome);
+                },
+              ));
         },
       ),
     );
   }
 }
-
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -134,7 +140,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>{
+class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called
@@ -144,25 +150,24 @@ class _MyHomePageState extends State<MyHomePage>{
     // than having to individually change instances of widgets.
     return Scaffold(
       drawer: Drawer(
-       child: ListView(
-         padding: EdgeInsets.zero,
-         children: <Widget>[
-           DrawerHeader(
-             decoration: const BoxDecoration(
-               color: Colors.blue,
-             ),
-             child: CircleAvatar(
-               child: Text(AppState().user.fullName[0], style: const TextStyle(fontSize: 32.0)),
-             ),
-           ),
-           ListTile(
-             leading: const Icon(Icons.history),
-             title: const Text('History'),
-             onTap: () => Navigator.pushNamed(context, AppState.routeHistory)
-           ),
-         ],
-       )
-      ),
+          child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              color: Colors.blue,
+            ),
+            child: CircleAvatar(
+              child: Text(AppState().user.fullName[0],
+                  style: const TextStyle(fontSize: 32.0)),
+            ),
+          ),
+          ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('History'),
+              onTap: () => Navigator.pushNamed(context, AppState.routeHistory)),
+        ],
+      )),
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
