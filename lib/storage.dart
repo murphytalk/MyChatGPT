@@ -237,8 +237,7 @@ class MongoDbStorage implements IStorage {
         .sortBy('created', descending: true)
         .limit(limit)
         .skip(skip));
-    final snapshot = await q.toList();
-    return snapshot
+    return await q
         .map((e) => ConversationInfo(
             uuid: e[_uuid] as String, topic: e[_topic] as String))
         .toList();
