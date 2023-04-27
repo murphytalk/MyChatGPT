@@ -172,19 +172,20 @@ class OpenAIChatState extends State<OpenAIChat> with RouteAware{
     Widget build(BuildContext context) {
       if(_thinking) return const Center(child: AwaitWidget(caption: "Thinking ..."));
 
-
       if(_loadConversation && AppState().conversationToLoad.isNotEmpty){
+        _curConversationId = AppState().conversationToLoad.uuid;
         return FutureBuilder(
             future: storage.getConversation(AppState().conversationToLoad.uuid),
             builder: (ctx, conversation){
               AppState().conversationToLoad = ConversationInfo.empty();
               _loadConversation = false;
               if(conversation.hasData){
-                //setState(() => );
+                storage.resumeConversation(_curConversationId!);
                 _messages = conversation.data?.messages ?? [];
                 return _buildNormalUi(context);
               }
               else if(conversation.hasError){
+                _curConversationId = null;
                 if(conversation.error !=null){
                   return AlertDialog(
                     title: const Text('Could not load conversion'),

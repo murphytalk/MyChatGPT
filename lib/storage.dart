@@ -91,6 +91,7 @@ abstract class IStorage{
   Future<bool> connect();
   Future<void> close();
   Future<String> newConversation(List<String> tags, String owner, String topic);
+  void resumeConversation(String uuid);
   Future<bool> question(String msg);
   Future<bool> answer(OpenAIChatCompletionModel msg);
   Future<List<User>> getUsers();
@@ -124,6 +125,11 @@ class MongoDbStorage implements IStorage{
     log('new conversation save result: ${r.isSuccess}');
     saveTags(false, tags.toSet());
     return _uuidStr;
+  }
+
+  @override
+  void resumeConversation(String uuid){
+    _uuidStr = uuid;
   }
 
   Future<void> saveTags(bool updateDocTags, Set<String> tags) async{
