@@ -117,12 +117,9 @@ class _OpenAIChatState extends State<OpenAIChat> with RouteAware {
                 icon: const Icon(Icons.add_circle),
                 onPressed: () {
                   _textController.clear();
-                  storage.newConversation(
-                      [], AppState().user.name, _textController.text).then((v) {
-                    _curConversationId = v;
-                    _textController.clear();
-                  }).catchError((e) {
-                    showErrorDialog(context, e.toString());
+                  setState(() {
+                    _curConversationId = null;
+                    _messages = [];
                   });
                 },
               ),
