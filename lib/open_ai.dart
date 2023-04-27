@@ -153,13 +153,9 @@ class _OpenAIChatState extends State<OpenAIChat> with RouteAware {
                         showErrorDialog(context, e.toString());
                       });
                     } else {
-                      storage.question(q).then((_) {
-                        _sendMessage(context, q).whenComplete(
-                            () => setState(() => _canAskQuestion = true));
-                        _textController.clear();
-                      }).catchError((e) {
-                        showErrorDialog(context, e.toString());
-                      });
+                      _sendMessage(context, q).whenComplete(
+                          () => setState(() => _canAskQuestion = true));
+                      _textController.clear();
                     }
                   }
                 },
