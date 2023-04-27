@@ -44,7 +44,6 @@ class _OpenAIChatState extends State<OpenAIChat> with RouteAware {
   }
 
   Future<void> _sendMessage(BuildContext ctx, String message) async {
-    log('sending msg $message');
     setState(() {
       _messages.add(Message(fromAI: false, content: message));
     });
@@ -170,12 +169,7 @@ class _OpenAIChatState extends State<OpenAIChat> with RouteAware {
   @override
   Widget build(BuildContext context) {
     if (_thinking) {
-      return Container(
-        color: Colors.black.withOpacity(0.5),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const AwaitWidget(caption: 'Thinking');
     }
 
     if (_loadConversation && AppState().conversationToLoad.isNotEmpty) {
