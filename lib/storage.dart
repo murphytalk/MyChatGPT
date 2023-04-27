@@ -35,21 +35,56 @@ class ConversationInfo{
   final String uuid;
   final String topic;
   const ConversationInfo({required this.uuid, required this.topic});
+  bool get isEmpty => uuid == '';
+  bool get isNotEmpty => !isEmpty;
   factory ConversationInfo.empty(){
     return const ConversationInfo(uuid: "", topic: "");
   }
 }
 
+const _tags = 'tags';
+const _owner = 'owner';
+const _topic = 'topic';
+const _fromAI = 'from_ai';
+const _uuid = 'uuid';
+const _question = 'question';
+const _answer = 'answer';
+const _created = 'created';
+const _messages = 'messages';
+
 class Conversation{
   final String uuid;
   final List<String> tags;
-  final User owner;
+  final String owner;
   final DateTime created;
   final List<Message> messages;
   DateTime lastUpdated;
   String topic;
+
   Conversation({required this.uuid, required this.topic, required this.tags, required this.owner, required this.created, required this.messages})
         :lastUpdated = created;
+
+  factory Conversation.fromMap(Map<String, dynamic> json,){
+    final List<Message> messages = [];
+    json[_messages].forEach( (m) {
+      final isFromAi = m[_fromAI];
+      String content;
+      if(isFromAi){
+        content = m[_answer]['choices'][0]['message']['content'];
+      }
+      else{
+        content = m[_question];
+      }
+      messages.add(Message(fromAI: isFromAi, content: content));
+    });
+    final tags = (json[_tags] as List<dynamic>).map((e) => e.toString()).toList(growable: false);
+    return Conversation(uuid: json[_uuid], topic: json[_topic], tags: tags , owner: json[_owner], created: _toDateTime(json[_created]), messages: messages);
+  }
+
+  static DateTime _toDateTime(dynamic input){
+    final i = input.toInt();
+    return DateTime.fromMicrosecondsSinceEpoch(i);
+  }
 }
 
 abstract class IStorage{
@@ -60,7 +95,7 @@ abstract class IStorage{
   Future<bool> answer(OpenAIChatCompletionModel msg);
   Future<List<User>> getUsers();
   Future<List<ConversationInfo>> getHistory(int limit, int skip);
-  //Future<List<String>> getConversationContent(String uuid);
+  Future<Conversation> getConversation(String uuid);
 }
 
 class MongoDbStorage implements IStorage{
@@ -70,15 +105,6 @@ class MongoDbStorage implements IStorage{
   static const _users = 'users';
 
   static const _collectionName = 'QA';
-  static const _tags = 'tags';
-  static const _owner = 'owner';
-  static const _topic = 'topic';
-  static const _fromAi = 'from_ai';
-  static const _uuid = 'uuid';
-  static const _question = 'question';
-  static const _answer = 'answer';
-  static const _created = 'created';
-  static const _messages = 'messages';
 
   late String _uuidStr;
   late Db _db;
@@ -154,12 +180,12 @@ class MongoDbStorage implements IStorage{
 
   @override
   Future<bool> question(String msg){
-    return _saveMessage({_fromAi: false, _question: msg});
+    return _saveMessage({_fromAI: false, _question: msg});
   }
 
   @override
   Future<bool> answer(OpenAIChatCompletionModel msg) {
-    return _saveMessage({_fromAi: true, _answer: msg.toMap()});
+    return _saveMessage({_fromAI: true, _answer: msg.toMap()});
   }
 
   @override
@@ -182,13 +208,12 @@ class MongoDbStorage implements IStorage{
     final snapshot = await q.toList();
     return snapshot.map((e) => ConversationInfo(uuid: e[_uuid] as String, topic:e[_topic] as String)).toList();
   }
-/*
+
   @override
-  Future<List<String>> getConversationContent(String uuid) async{
+  Future<Conversation> getConversation(String uuid) async{
     final q = where.eq(_uuid, uuid);
     var doc = await _collection.findOne(q);
-    if(doc == null) return [];
-
+    if(doc == null) throw Exception('No such conversation');
+    return Conversation.fromMap(doc);
   }
- */
 }

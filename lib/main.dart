@@ -12,12 +12,14 @@ void main() {
   runApp(const MyApp());
 }
 
+final RouteObserver<ModalRoute> routeObserver = RouteObserver<PageRoute>();
+
 final IStorage storage = MongoDbStorage();
 
 class AppState {
   static final AppState _singleton = AppState._internal();
   User user = User.defaultUser();
-  ConversationInfo curConversation = ConversationInfo.empty();
+  ConversationInfo conversationToLoad = ConversationInfo.empty();
 
   factory AppState() { return _singleton; }
   AppState._internal();
@@ -54,6 +56,7 @@ class MyApp extends StatelessWidget {
                   AppState.routeHome :   (c) => const MyHomePage(title: 'My ChatGPT'),
                   AppState.routeHistory: (c) => const HistoryScreen(),
                 },
+                navigatorObservers: [routeObserver],
                 theme: ThemeData(
                   primarySwatch: Colors.blue,
                 ),
@@ -171,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage>{
 
   @override
   void dispose() {
-    super.dispose();
     storage.close();
+    super.dispose();
   }
 }

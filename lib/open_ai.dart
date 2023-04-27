@@ -13,17 +13,17 @@ class OpenAIChat extends StatefulWidget {
 }
 
 
-class OpenAIChatState extends State<OpenAIChat> {
+class OpenAIChatState extends State<OpenAIChat> with RouteAware{
   final TextEditingController _textController = TextEditingController();
-  final List<Message> _messages = [];
+  List<Message> _messages = [];
   String? _curConversationId;
   bool _thinking = false;
+  bool _loadConversation = false;
+  bool _observerRegistered = false;
 
   static const _prompt = 'AI tutor,answer my question concisely without elaboration';
 
-  int i = 1;
   Future<String> _getOpenAiResponse(List<Message> messages) async{
-
     final first = OpenAIChatCompletionChoiceMessageModel(
       content: _prompt,
       role: OpenAIChatMessageRole.user,
@@ -63,10 +63,31 @@ class OpenAIChatState extends State<OpenAIChat> {
     }
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if(!_observerRegistered) {
+      log('route observer registered');
+      _observerRegistered = true;
+      routeObserver.subscribe(this, ModalRoute.of(context)!);
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
-    if(_thinking) return const Center(child: AwaitWidget(caption: "Thinking ..."));
+  void dispose() {
+    log('route observer unregistered');
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    if(AppState().conversationToLoad.isNotEmpty){
+      setState(() => _loadConversation = true);
+    }
+  }
+
+  Widget _buildNormalUi(BuildContext context) {
     return Column(
       children: [
         Expanded(
@@ -95,11 +116,13 @@ class OpenAIChatState extends State<OpenAIChat> {
                 onPressed: () {
                   _textController.clear();
                   storage.newConversation([], "mu", _textController.text)
-                  .then((v){
+                      .then((v) {
                     _curConversationId = v;
                     _textController.clear();
                   })
-                  .catchError((e) { showErrorDialog(context, e.toString()); });
+                      .catchError((e) {
+                    showErrorDialog(context, e.toString());
+                  });
                 },
               ),
               Expanded(
@@ -114,25 +137,25 @@ class OpenAIChatState extends State<OpenAIChat> {
                 icon: const Icon(Icons.send),
                 onPressed: () {
                   var q = _textController.text.trim();
-                  if(q.isNotEmpty) {
+                  if (q.isNotEmpty) {
                     if (_curConversationId == null) {
                       storage.newConversation(
                           [], AppState().user.name, q)
-                      .then((value) {
+                          .then((value) {
                         _curConversationId = value;
                         _textController.clear();
                         _sendMessage(context, q);
                       })
-                      .catchError((e) {
+                          .catchError((e) {
                         showErrorDialog(context, e.toString());
                       });
                     }
                     else {
-                      storage.question(q).then((_){
+                      storage.question(q).then((_) {
                         _sendMessage(context, q);
                         _textController.clear();
                       })
-                      .catchError((e) {
+                          .catchError((e) {
                         showErrorDialog(context, e.toString());
                       });
                     }
@@ -143,6 +166,49 @@ class OpenAIChatState extends State<OpenAIChat> {
           ),
         ),
       ],
-    );
-  }
+    );}
+
+    @override
+    Widget build(BuildContext context) {
+      if(_thinking) return const Center(child: AwaitWidget(caption: "Thinking ..."));
+
+
+      if(_loadConversation && AppState().conversationToLoad.isNotEmpty){
+        return FutureBuilder(
+            future: storage.getConversation(AppState().conversationToLoad.uuid),
+            builder: (ctx, conversation){
+              AppState().conversationToLoad = ConversationInfo.empty();
+              _loadConversation = false;
+              if(conversation.hasData){
+                //setState(() => );
+                _messages = conversation.data?.messages ?? [];
+                return _buildNormalUi(context);
+              }
+              else if(conversation.hasError){
+                if(conversation.error !=null){
+                  return AlertDialog(
+                    title: const Text('Could not load conversion'),
+                    content: Text(conversation.error.toString()),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text('Close'),
+                        onPressed: () {
+                          //trigger rebuild
+                          setState((){});
+                        },
+                      ),
+                    ],
+                  );
+                }
+                return _buildNormalUi(context);
+              }
+              else {
+                return Center(child: AwaitWidget(caption: "Loading ${AppState().conversationToLoad.topic}",));
+              }
+            });
+      }
+      else {
+        return _buildNormalUi(context);
+      }
+    }
 }

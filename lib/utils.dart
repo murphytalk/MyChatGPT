@@ -45,3 +45,36 @@ class AwaitWidget extends StatelessWidget {
 void log(String msg){
   dev.log(msg, time:DateTime.now());
 }
+
+class ErrorAlertScreen extends StatelessWidget {
+  final String errorMessage;
+
+  const ErrorAlertScreen({Key? key, required this.errorMessage}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 100,
+            color: Colors.orangeAccent,
+          ),
+          SizedBox(height: 30),
+          Text(
+            errorMessage,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+}
