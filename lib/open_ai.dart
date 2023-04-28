@@ -2,7 +2,6 @@ import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_chat_gpt/main.dart';
-import 'package:my_chat_gpt/markdown.dart';
 import 'package:my_chat_gpt/storage.dart';
 import 'package:my_chat_gpt/utils.dart';
 
@@ -10,10 +9,10 @@ class OpenAIChat extends StatefulWidget {
   const OpenAIChat({super.key});
 
   @override
-  _OpenAIChatState createState() => _OpenAIChatState();
+  OpenAIChatState createState() => OpenAIChatState();
 }
 
-class _OpenAIChatState extends State<OpenAIChat> with RouteAware {
+class OpenAIChatState extends State<OpenAIChat> with RouteAware {
   final TextEditingController _textController = TextEditingController();
   List<Message> _messages = [];
   String? _curConversationId;

@@ -19,7 +19,7 @@ class User {
     return User(name: userName, fullName: json['name']);
   }
   factory User.defaultUser() {
-    return const User(name: "me", fullName: "");
+    return const User(name: "default", fullName: "Default User");
   }
 }
 
@@ -51,6 +51,7 @@ const _question = 'question';
 const _answer = 'answer';
 const _created = 'created';
 const _messages = 'messages';
+const _users = 'users';
 
 class Conversation {
   final String uuid;
@@ -216,13 +217,24 @@ class MongoDbStorage implements IStorage {
   @override
   Future<List<User>> getUsers() async {
     try {
-      var q = where.eq(_name, "users");
+      var q = where.eq(_name, _users);
       var doc = await _settingsCollection.findOne(q);
-      if (doc == null) return Future.error(Exception("No user settings"));
-      var users = doc[_users] as Map<String, dynamic>;
-      return users.entries
-          .map((e) => User.fromMap(e.key, e.value))
-          .toList(growable: false);
+      if (doc == null) {
+        //first time to run this app, create a default user
+        final u = User.defaultUser();
+        await _settingsCollection.insertOne({
+          _name: _users,
+          _users: {
+            u.name: {_name: u.fullName}
+          }
+        });
+        return [u];
+      } else {
+        var users = doc[_users] as Map<String, dynamic>;
+        return users.entries
+            .map((e) => User.fromMap(e.key, e.value))
+            .toList(growable: false);
+      }
     } catch (e) {
       return Future.error(e);
     }
