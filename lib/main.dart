@@ -50,6 +50,7 @@ class MyApp extends StatelessWidget {
             final users = dbConnected.data ?? [];
             child = MaterialApp(
               title: 'My AI Agent',
+              debugShowCheckedModeBanner: false,
               initialRoute: AppState.routeRoot,
               routes: {
                 AppState.routeRoot: (c) => _AvatarScreen(users: users),
@@ -149,29 +150,18 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      drawer: Drawer(
-          child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              color: Colors.blue,
-            ),
-            child: CircleAvatar(
-              child: Text(AppState().user.fullName[0],
-                  style: const TextStyle(fontSize: 32.0)),
-            ),
-          ),
-          ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('History'),
-              onTap: () => Navigator.pushNamed(context, AppState.routeHistory)),
-        ],
-      )),
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        actions: [
+          IconButton(
+            onPressed: () =>
+                Navigator.pushNamed(context, AppState.routeHistory),
+            icon: const Icon(Icons.history),
+            tooltip: 'History',
+          )
+        ],
       ),
       body: const OpenAIChat(),
     );

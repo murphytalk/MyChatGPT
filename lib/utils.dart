@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as dev;
 
+import 'package:flutter_markdown/flutter_markdown.dart';
+
 void showErrorDialog(BuildContext context, String error) {
   showDialog(
     context: context,

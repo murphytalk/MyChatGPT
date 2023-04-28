@@ -2,6 +2,7 @@ import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_chat_gpt/main.dart';
+import 'package:my_chat_gpt/markdown.dart';
 import 'package:my_chat_gpt/storage.dart';
 import 'package:my_chat_gpt/utils.dart';
 
