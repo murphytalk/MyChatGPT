@@ -87,6 +87,7 @@ class _SplashScreenState extends State<_SplashScreen> {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+  static const String _title = 'My ChatGPT';
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +95,7 @@ class MyApp extends StatelessWidget {
         title: 'My AI Agent',
         debugShowCheckedModeBanner: false,
         home: _SplashScreen(
-            homeScreenBuilder: (_, users) => _AvatarScreen(users: users),
+            homeScreenBuilder: (_, users) => users.length > 1 ? _AvatarScreen(users: users): const MyHomePage(title: _title),
             errScreenBuilder: (_, err) => Center(
                     child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -110,7 +111,7 @@ class MyApp extends StatelessWidget {
                       ),
                     ]))),
         routes: {
-          AppState.routeHome: (c) => const MyHomePage(title: 'My ChatGPT'),
+          AppState.routeHome: (c) => const MyHomePage(title: _title),
           AppState.routeHistory: (c) => const HistoryScreen(),
         },
         navigatorObservers: [routeObserver],
