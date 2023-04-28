@@ -1,6 +1,8 @@
 # MyChatGPT
 
-A ChatGPT UI for desktop, mobile and web, thanks to Flutter.
+A ChatGPT UI for desktop, mobile, and web.
+
+All conversations are saved in MongoDB, [MongoDb Atlas](https://www.mongodb.com/atlas) offers a free tier, which is more than sufficient for this app.
 
 ## Build
 
@@ -15,18 +17,3 @@ Then run `flutter pub run build_runner build` to generate `lib/env/env.g.dart`.
 
 DO NOT share your the `.env` and `env.g.dart` file. They have already been added to `.gitignore`.
 
-### Prepare data in MongoDb
-
-Prompts to AI and conversation history are managed on user/owner/profile basis.
-
-In your MongoDb , populate a document like below in collection `settings` before start the app.
-
-```json
-{
-    "name":"users",
-    "users":{
-        "profile1": {"name":"User1"},
-        "profile2": {"name":"User2"}
-    }
-}
-```
