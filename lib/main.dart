@@ -25,13 +25,36 @@ class AppState {
   }
   AppState._internal();
 
-  static const routeRoot = '/';
   static const routeHome = '/h';
   static const routeHistory = '/hist';
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class _SplashScreen extends StatefulWidget {
+  final Widget Function(BuildContext, List<User>) homeScreenBuilder;
+  final Widget Function(BuildContext, String) errScreenBuilder;
+
+  const _SplashScreen({
+    required this.homeScreenBuilder,
+    required this.errScreenBuilder,
+  });
+
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<_SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    _bootstrap().then((users) {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx) => widget.homeScreenBuilder(ctx, users)));
+    }).catchError((e) {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (ctx) => widget.errScreenBuilder(ctx, e.toString())));
+    });
+  }
 
   Future<List<User>> _bootstrap() async {
     var connected = await storage.connect();
@@ -39,50 +62,62 @@ class MyApp extends StatelessWidget {
     return storage.getUsers();
   }
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: _bootstrap(),
-        builder: (ctx, AsyncSnapshot<List<User>> dbConnected) {
-          Widget child;
-          if (dbConnected.hasData) {
-            final users = dbConnected.data ?? [];
-            child = MaterialApp(
-              title: 'My AI Agent',
-              debugShowCheckedModeBanner: false,
-              initialRoute: AppState.routeRoot,
-              routes: {
-                AppState.routeRoot: (c) => _AvatarScreen(users: users),
-                AppState.routeHome: (c) =>
-                    const MyHomePage(title: 'My ChatGPT'),
-                AppState.routeHistory: (c) => const HistoryScreen(),
-              },
-              navigatorObservers: [routeObserver],
-              theme: ThemeData(
-                primarySwatch: Colors.blue,
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue, Colors.green],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-            );
-          } else if (dbConnected.hasError) {
-            child = Center(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.red,
-                    size: 60,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Text('Error: ${dbConnected.error}'),
-                  ),
-                ]));
-          } else {
-            child = const AwaitWidget(caption: "Connecting ...");
-          }
-          return Center(child: child);
-        });
+            ),
+          ),
+          const Center(
+            child: CircularProgressIndicator(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+        title: 'My AI Agent',
+        debugShowCheckedModeBanner: false,
+        home: _SplashScreen(
+            homeScreenBuilder: (_, users) => _AvatarScreen(users: users),
+            errScreenBuilder: (_, err) => Center(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 60,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Text('Error: $err'),
+                      ),
+                    ]))),
+        routes: {
+          AppState.routeHome: (c) => const MyHomePage(title: 'My ChatGPT'),
+          AppState.routeHistory: (c) => const HistoryScreen(),
+        },
+        navigatorObservers: [routeObserver],
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ));
   }
 }
 
