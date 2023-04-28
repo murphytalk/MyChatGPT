@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:dart_openai/openai.dart';
 import 'package:my_chat_gpt/history.dart';
 import 'package:my_chat_gpt/storage.dart';
-import 'package:my_chat_gpt/utils.dart';
 import 'env/env.dart';
 import 'open_ai.dart';
 
@@ -195,6 +194,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 Navigator.pushNamed(context, AppState.routeHistory),
             icon: const Icon(Icons.history),
             tooltip: 'History',
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
           )
         ],
       ),
