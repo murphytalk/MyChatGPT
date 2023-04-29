@@ -35,7 +35,8 @@ class HistoryScreenState extends State<HistoryScreen> {
     setState(() {
       _isLoading = true;
     });
-    final documents = await storage.getHistory(AppState().user, _limit, _skip);
+    final documents = await storage.getHistory(AppState().user,
+        AppState().config.minMsgNumOfConversationShownInHistory, _limit, _skip);
     setState(() {
       _isLoading = false;
       _documents.addAll(documents);
@@ -67,7 +68,8 @@ class HistoryScreenState extends State<HistoryScreen> {
               setState(() {
                 _selected = index;
               });
-              Navigator.pushNamed(context, AppState.routeHome, arguments: document);
+              Navigator.pushNamed(context, AppState.routeHome,
+                  arguments: document);
             },
           );
         },

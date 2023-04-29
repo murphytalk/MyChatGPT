@@ -141,6 +141,11 @@ class OpenAIChatState extends State<OpenAIChat> {
                 tooltip: 'Copy mode',
               ),
               IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.edit),
+                tooltip: 'Edit',
+              ),
+              IconButton(
                 icon: const Icon(Icons.add_circle),
                 onPressed: () {
                   _textController.clear();

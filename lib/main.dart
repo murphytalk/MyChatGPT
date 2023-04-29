@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:dart_openai/openai.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,6 +19,7 @@ class AppState {
 
   User user = User.defaultUser();
   bool multipleUser = false;
+  Config config = Config.defaultCfg();
 
   factory AppState() {
     return _singleton;
@@ -64,7 +63,8 @@ class _SplashScreenState extends State<_SplashScreen> {
 
   Future<List<User>> _bootstrap() async {
     var connected = await storage.connect();
-    if (!connected) throw Exception("Failed to connect to db");
+    if (!connected) return Future.error("Failed to connect to db");
+    AppState().config = await storage.getConfig();
     return storage.getUsers();
   }
 
@@ -193,7 +193,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    log('user is ${AppState().user}');
     final List<Widget> actions = AppState().multipleUser
         ? [
             IconButton(

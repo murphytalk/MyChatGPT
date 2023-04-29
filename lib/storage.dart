@@ -4,8 +4,12 @@ import 'package:mongo_dart/mongo_dart.dart';
 import 'package:my_chat_gpt/env/env.dart';
 import 'package:my_chat_gpt/utils.dart';
 
+abstract class Serializable {
+  Map<String, dynamic> toMap();
+}
+
 @immutable
-class User {
+class User implements Serializable {
   final String name;
   final String fullName;
   const User({required this.name, required this.fullName});
@@ -20,6 +24,40 @@ class User {
   }
   factory User.defaultUser() {
     return const User(name: "default", fullName: "Default User");
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    return {
+      name: {_name: fullName}
+    };
+  }
+}
+
+class Config implements Serializable {
+  // only conversation that has no less than this number messages will be shown in history
+  // 0 means to show all conversations
+  int minMsgNumOfConversationShownInHistory;
+  Config({required this.minMsgNumOfConversationShownInHistory});
+
+  factory Config.defaultCfg() {
+    return Config(minMsgNumOfConversationShownInHistory: 1);
+  }
+
+  static const _minMsgNumOfConversationShownInHistory = 'minMsg';
+
+  factory Config.fromMap(Map<String, dynamic> json) {
+    return Config(
+        minMsgNumOfConversationShownInHistory:
+            json[_minMsgNumOfConversationShownInHistory]);
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    return {
+      _minMsgNumOfConversationShownInHistory:
+          minMsgNumOfConversationShownInHistory
+    };
   }
 }
 
@@ -42,6 +80,7 @@ class ConversationInfo {
   }
 }
 
+const _name = 'name';
 const _tags = 'tags';
 const _owner = 'owner';
 const _topic = 'topic';
@@ -52,6 +91,7 @@ const _answer = 'answer';
 const _created = 'created';
 const _messages = 'messages';
 const _users = 'users';
+const _config = 'config';
 
 class Conversation {
   final String uuid;
@@ -111,13 +151,15 @@ abstract class IStorage {
   Future<bool> question(String msg);
   Future<bool> answer(OpenAIChatCompletionModel msg);
   Future<List<User>> getUsers();
-  Future<List<ConversationInfo>> getHistory(User user, int limit, int skip);
+  Future<List<ConversationInfo>> getHistory(
+      User user, int minMsg, int limit, int skip);
   Future<Conversation> getConversation(String uuid);
+  Future<Config> getConfig();
+  Future<void> saveConfig();
 }
 
 class MongoDbStorage implements IStorage {
   static const _settings = 'settings';
-  static const _name = 'name';
   static const _app = 'app';
 
   static const _collectionName = 'QA';
@@ -225,12 +267,7 @@ class MongoDbStorage implements IStorage {
       if (doc == null) {
         //first time to run this app, create a default user
         final u = User.defaultUser();
-        await _settingsCollection.insertOne({
-          _name: _users,
-          _users: {
-            u.name: {_name: u.fullName}
-          }
-        });
+        await _settingsCollection.insertOne({_name: _users, _users: u.toMap()});
         return [u];
       } else {
         var users = doc[_users] as Map<String, dynamic>;
@@ -244,8 +281,30 @@ class MongoDbStorage implements IStorage {
   }
 
   @override
+  Future<Config> getConfig() async {
+    try {
+      var q = where.eq(_name, _config);
+      var doc = await _settingsCollection.findOne(q);
+      if (doc == null) {
+        //first time to run this app, create a default config
+        final c = Config.defaultCfg();
+        await _settingsCollection
+            .insertOne({_name: _config, _config: c.toMap()});
+        return c;
+      } else {
+        return Config.fromMap(doc[_config]);
+      }
+    } catch (e) {
+      return Future.error(e);
+    }
+  }
+
+  @override
+  Future<void> saveConfig() async {}
+
+  @override
   Future<List<ConversationInfo>> getHistory(
-      User user, int limit, int skip) async {
+      User user, int minMsg, int limit, int skip) async {
     final q = _collection.find(where
         .eq(_owner, user.name)
         .fields([_uuid, _topic])
