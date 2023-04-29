@@ -17,8 +17,9 @@ final IStorage storage = MongoDbStorage();
 
 class AppState {
   static final AppState _singleton = AppState._internal();
+
   User user = User.defaultUser();
-  ConversationInfo conversationToLoad = ConversationInfo.empty();
+  bool multipleUser = false;
 
   factory AppState() {
     return _singleton;
@@ -46,7 +47,6 @@ class _SplashScreenState extends State<_SplashScreen> {
   @override
   void initState() {
     super.initState();
-
     _bootstrap().then((users) {
       final nextScreen = widget.homeScreenBuilder(context, users);
       if(nextScreen != null) {
@@ -104,6 +104,7 @@ class MyApp extends StatelessWidget {
         home: _SplashScreen(
             homeScreenBuilder: (_, users) {
               if(users.length > 1) {
+                AppState().multipleUser = true;
                 return _AvatarScreen(users: users);
               }
               else{
@@ -194,23 +195,31 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     log('user is ${AppState().user}');
+    final List<Widget> actions = AppState().multipleUser ?
+      [IconButton(onPressed: () =>
+        storage.getUsers().then((users) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (ctx) => _AvatarScreen(users: users))))
+      , icon: const Icon(Icons.group))]
+    : [];
+    actions.addAll(
+      [
+        IconButton(
+          onPressed: () =>
+              Navigator.pushNamed(context, AppState.routeHistory),
+          icon: const Icon(Icons.history),
+          tooltip: 'History',
+        ),
+        IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.settings),
+          tooltip: 'Settings',
+        )
+      ],
+    );
     return Scaffold(
       appBar: AppBar(
         leading: Navigator.of(context).canPop() ? IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.arrow_back)): null,
         title: Text(widget.title),
-        actions: [
-          IconButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, AppState.routeHistory),
-            icon: const Icon(Icons.history),
-            tooltip: 'History',
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.settings),
-            tooltip: 'Settings',
-          )
-        ],
+        actions: actions
       ),
       body: const OpenAIChat(),
     );

@@ -172,9 +172,9 @@ class OpenAIChatState extends State<OpenAIChat>{
               }
               return _buildNormalUi(context);
             } else {
-              return Center(
+              return const Center(
                   child: AwaitWidget(
-                caption: "Loading ${AppState().conversationToLoad.topic}",
+                caption: "Loading ..."
               ));
             }
           });

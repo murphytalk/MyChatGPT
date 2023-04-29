@@ -67,7 +67,6 @@ class HistoryScreenState extends State<HistoryScreen> {
               setState(() {
                 _selected = index;
               });
-              AppState().conversationToLoad = document;
               Navigator.pushNamed(context, AppState.routeHome, arguments: document);
             },
           );

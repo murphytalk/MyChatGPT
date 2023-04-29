@@ -127,6 +127,7 @@ class MongoDbStorage implements IStorage {
   late Db _db;
   late DbCollection _collection;
   late DbCollection _settingsCollection;
+  bool connected = false;
 
   final Set<String> _knownTags = {};
 
@@ -197,11 +198,14 @@ class MongoDbStorage implements IStorage {
 
   @override
   Future<bool> connect() async {
-    _db = await Db.create(Env.mongoDbConnStr);
-    await _db.open();
-    _collection = _db.collection(_collectionName);
-    _settingsCollection = _db.collection(_settings);
-    return _db.isConnected;
+    if(!connected) {
+      _db = await Db.create(Env.mongoDbConnStr);
+      await _db.open();
+      _collection = _db.collection(_collectionName);
+      _settingsCollection = _db.collection(_settings);
+      connected = _db.isConnected;
+    }
+    return connected;
   }
 
   @override
