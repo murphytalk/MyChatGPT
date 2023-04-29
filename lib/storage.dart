@@ -307,7 +307,10 @@ class MongoDbStorage implements IStorage {
       User user, int minMsg, int limit, int skip) async {
     final c = _collection.modernAggregate([
       {
-        '\$match': {'owner': user.name}
+        '\$match': {_owner: user.name}
+      },
+      {
+        '\$sort': {_created: -1}
       },
       {
         '\$project': {
@@ -320,9 +323,6 @@ class MongoDbStorage implements IStorage {
         '\$match': {
           'msgCount': {'\$gt': minMsg}
         }
-      },
-      {
-        '\$sort': {'created': -1}
       },
       {'\$skip': skip},
       {'\$limit': limit}
