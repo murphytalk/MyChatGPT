@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:dart_openai/openai.dart';
 import 'package:my_chat_gpt/history.dart';
@@ -29,7 +31,7 @@ class AppState {
 }
 
 class _SplashScreen extends StatefulWidget {
-  final Widget Function(BuildContext, List<User>) homeScreenBuilder;
+  final Widget? Function(BuildContext, List<User>) homeScreenBuilder;
   final Widget Function(BuildContext, String) errScreenBuilder;
 
   const _SplashScreen({
@@ -47,8 +49,14 @@ class _SplashScreenState extends State<_SplashScreen> {
     super.initState();
 
     _bootstrap().then((users) {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (ctx) => widget.homeScreenBuilder(ctx, users)));
+      final nextScreen = widget.homeScreenBuilder(context, users);
+      if(nextScreen != null) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (ctx) => nextScreen));
+      }
+      else{
+        Navigator.pushReplacementNamed(context, AppState.routeHome);
+      }
     }).catchError((e) {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (ctx) => widget.errScreenBuilder(ctx, e.toString())));
@@ -95,7 +103,15 @@ class MyApp extends StatelessWidget {
         title: 'My AI Agent',
         debugShowCheckedModeBanner: false,
         home: _SplashScreen(
-            homeScreenBuilder: (_, users) => users.length > 1 ? _AvatarScreen(users: users): const MyHomePage(title: _title),
+            homeScreenBuilder: (_, users) {
+              if(users.length > 1) {
+                return _AvatarScreen(users: users);
+              }
+              else{
+                AppState().user = users[0];
+                return null;
+              }
+            },
             errScreenBuilder: (_, err) => Center(
                     child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -179,6 +195,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
+    log('user is ${AppState().user}');
     // This method is rerun every time setState is called
     //
     // The Flutter framework has been optimized to make rerunning build methods
