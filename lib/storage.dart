@@ -305,13 +305,30 @@ class MongoDbStorage implements IStorage {
   @override
   Future<List<ConversationInfo>> getHistory(
       User user, int minMsg, int limit, int skip) async {
-    final q = _collection.find(where
-        .eq(_owner, user.name)
-        .fields([_uuid, _topic])
-        .sortBy('created', descending: true)
-        .limit(limit)
-        .skip(skip));
-    return await q
+    final c = _collection.modernAggregate([
+      {
+        '\$match': {'owner': user.name}
+      },
+      {
+        '\$project': {
+          _uuid: 1,
+          _topic: 1,
+          'msgCount': {'\$size': '\$$_messages'}
+        }
+      },
+      {
+        '\$match': {
+          'msgCount': {'\$gt': minMsg}
+        }
+      },
+      {
+        '\$sort': {'created': -1}
+      },
+      {'\$skip': skip},
+      {'\$limit': limit}
+    ]);
+
+    return c
         .map((e) => ConversationInfo(
             uuid: e[_uuid] as String, topic: e[_topic] as String))
         .toList();
