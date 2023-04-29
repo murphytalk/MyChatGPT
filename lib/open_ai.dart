@@ -122,8 +122,8 @@ class OpenAIChatState extends State<OpenAIChat> {
                       : ListTile(
                           title: Text(content,
                               style: GoogleFonts.titilliumWeb(
-                                  textStyle:
-                                      TextStyle(fontWeight: FontWeight.w600))),
+                                  textStyle: const TextStyle(
+                                      fontWeight: FontWeight.w600))),
                         ));
             },
           ),
@@ -133,11 +133,13 @@ class OpenAIChatState extends State<OpenAIChat> {
           child: Row(
             children: [
               IconButton(
-                  onPressed: () => setState(() => _copyMode = !_copyMode),
-                  icon: Icon(
-                    Icons.content_copy,
-                    color: _copyMode ? Colors.blue : Colors.black,
-                  )),
+                onPressed: () => setState(() => _copyMode = !_copyMode),
+                icon: Icon(
+                  Icons.content_copy,
+                  color: _copyMode ? Colors.blue : Colors.black,
+                ),
+                tooltip: 'Copy mode',
+              ),
               IconButton(
                 icon: const Icon(Icons.add_circle),
                 onPressed: () {
@@ -147,6 +149,7 @@ class OpenAIChatState extends State<OpenAIChat> {
                     _messages = [];
                   });
                 },
+                tooltip: 'New conversation',
               ),
               Expanded(
                   child: RawKeyboardListener(
@@ -159,13 +162,15 @@ class OpenAIChatState extends State<OpenAIChat> {
                   maxLines: null,
                   minLines: 1,
                   decoration: const InputDecoration(
-                    labelText: 'Ask a question',
+                    labelText: 'Ask a question, Ctrl-Enter to submit',
                   ),
                 ),
               )),
               IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: () => _submitQuestion()),
+                icon: const Icon(Icons.send),
+                onPressed: () => _submitQuestion(),
+                tooltip: 'Submit',
+              ),
             ],
           ),
         ),

@@ -197,12 +197,14 @@ class _MyHomePageState extends State<MyHomePage> {
     final List<Widget> actions = AppState().multipleUser
         ? [
             IconButton(
-                onPressed: () => storage.getUsers().then((users) =>
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (ctx) => _AvatarScreen(users: users)))),
-                icon: const Icon(Icons.group))
+              onPressed: () => storage.getUsers().then((users) =>
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (ctx) => _AvatarScreen(users: users)))),
+              icon: const Icon(Icons.group),
+              tooltip: 'Switch User',
+            )
           ]
         : [];
     actions.addAll(
