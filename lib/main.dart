@@ -2,16 +2,17 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:dart_openai/openai.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:my_chat_gpt/history.dart';
 import 'package:my_chat_gpt/storage.dart';
 import 'env/env.dart';
 import 'open_ai.dart';
 
 void main() {
+  GoogleFonts.config.allowRuntimeFetching = false;
   OpenAI.apiKey = Env.openApiKey;
   runApp(const MyApp());
 }
-
 
 final IStorage storage = MongoDbStorage();
 
@@ -49,11 +50,10 @@ class _SplashScreenState extends State<_SplashScreen> {
     super.initState();
     _bootstrap().then((users) {
       final nextScreen = widget.homeScreenBuilder(context, users);
-      if(nextScreen != null) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (ctx) => nextScreen));
-      }
-      else{
+      if (nextScreen != null) {
+        Navigator.of(context)
+            .pushReplacement(MaterialPageRoute(builder: (ctx) => nextScreen));
+      } else {
         Navigator.pushReplacementNamed(context, AppState.routeHome);
       }
     }).catchError((e) {
@@ -103,11 +103,10 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: _SplashScreen(
             homeScreenBuilder: (_, users) {
-              if(users.length > 1) {
+              if (users.length > 1) {
                 AppState().multipleUser = true;
                 return _AvatarScreen(users: users);
-              }
-              else{
+              } else {
                 AppState().user = users[0];
                 return null;
               }
@@ -195,16 +194,21 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     log('user is ${AppState().user}');
-    final List<Widget> actions = AppState().multipleUser ?
-      [IconButton(onPressed: () =>
-        storage.getUsers().then((users) => Navigator.pushReplacement(context, MaterialPageRoute(builder: (ctx) => _AvatarScreen(users: users))))
-      , icon: const Icon(Icons.group))]
-    : [];
+    final List<Widget> actions = AppState().multipleUser
+        ? [
+            IconButton(
+                onPressed: () => storage.getUsers().then((users) =>
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (ctx) => _AvatarScreen(users: users)))),
+                icon: const Icon(Icons.group))
+          ]
+        : [];
     actions.addAll(
       [
         IconButton(
-          onPressed: () =>
-              Navigator.pushNamed(context, AppState.routeHistory),
+          onPressed: () => Navigator.pushNamed(context, AppState.routeHistory),
           icon: const Icon(Icons.history),
           tooltip: 'History',
         ),
@@ -217,10 +221,13 @@ class _MyHomePageState extends State<MyHomePage> {
     );
     return Scaffold(
       appBar: AppBar(
-        leading: Navigator.of(context).canPop() ? IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.arrow_back)): null,
-        title: Text(widget.title),
-        actions: actions
-      ),
+          leading: Navigator.of(context).canPop()
+              ? IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back))
+              : null,
+          title: Text(widget.title),
+          actions: actions),
       body: const OpenAIChat(),
     );
   }

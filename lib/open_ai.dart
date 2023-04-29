@@ -2,6 +2,7 @@ import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:my_chat_gpt/main.dart';
 import 'package:my_chat_gpt/storage.dart';
 import 'package:my_chat_gpt/utils.dart';
@@ -119,7 +120,10 @@ class OpenAIChatState extends State<OpenAIChat> {
                           styleSheet: MarkdownStyleSheet(),
                         )
                       : ListTile(
-                          title: Text(content),
+                          title: Text(content,
+                              style: GoogleFonts.titilliumWeb(
+                                  textStyle:
+                                      TextStyle(fontWeight: FontWeight.w600))),
                         ));
             },
           ),

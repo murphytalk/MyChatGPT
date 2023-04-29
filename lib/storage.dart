@@ -119,7 +119,6 @@ class MongoDbStorage implements IStorage {
   static const _settings = 'settings';
   static const _name = 'name';
   static const _app = 'app';
-  static const _users = 'users';
 
   static const _collectionName = 'QA';
 
@@ -198,7 +197,7 @@ class MongoDbStorage implements IStorage {
 
   @override
   Future<bool> connect() async {
-    if(!connected) {
+    if (!connected) {
       _db = await Db.create(Env.mongoDbConnStr);
       await _db.open();
       _collection = _db.collection(_collectionName);
