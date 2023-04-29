@@ -41,7 +41,7 @@ class Config implements Serializable {
   Config({required this.minMsgNumOfConversationShownInHistory});
 
   factory Config.defaultCfg() {
-    return Config(minMsgNumOfConversationShownInHistory: 1);
+    return Config(minMsgNumOfConversationShownInHistory: 2);
   }
 
   static const _minMsgNumOfConversationShownInHistory = 'minMsg';
@@ -300,7 +300,9 @@ class MongoDbStorage implements IStorage {
   }
 
   @override
-  Future<void> saveConfig() async {}
+  Future<void> saveConfig() async {
+    log('Config saved');
+  }
 
   @override
   Future<List<ConversationInfo>> getHistory(

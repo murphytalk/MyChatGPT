@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dart_openai/openai.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:my_chat_gpt/edit.dart';
 import 'package:my_chat_gpt/history.dart';
 import 'package:my_chat_gpt/storage.dart';
 import 'env/env.dart';
@@ -28,6 +29,7 @@ class AppState {
 
   static const routeHome = '/h';
   static const routeHistory = '/hist';
+  static const routeSettings = '/s';
 }
 
 class _SplashScreen extends StatefulWidget {
@@ -128,6 +130,7 @@ class MyApp extends StatelessWidget {
         routes: {
           AppState.routeHome: (c) => const MyHomePage(title: _title),
           AppState.routeHistory: (c) => const HistoryScreen(),
+          AppState.routeSettings: (c) => const SettingsScreen(),
         },
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -214,7 +217,7 @@ class _MyHomePageState extends State<MyHomePage> {
           tooltip: 'History',
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () => Navigator.pushNamed(context, AppState.routeSettings),
           icon: const Icon(Icons.settings),
           tooltip: 'Settings',
         )
