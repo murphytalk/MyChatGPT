@@ -19,6 +19,7 @@ class OpenAIChatState extends State<OpenAIChat> {
   String? _curConversationId;
   bool _thinking = false;
   bool _canAskQuestion = true;
+  bool _copyMode = false;
 
   static const _prompt =
       'AI tutor,answer my question concisely without elaboration';
@@ -106,14 +107,20 @@ class OpenAIChatState extends State<OpenAIChat> {
             itemBuilder: (context, index) {
               final isMarkdown = _messages[index].fromAI;
               final content = _messages[index].content;
-              return isMarkdown
-                  ? Markdown(
-                      data: content,
-                      shrinkWrap: true,
-                    )
-                  : ListTile(
-                      title: Text(content),
-                    );
+              return _copyMode
+                  ? SelectableText(content,
+                      style: TextStyle(
+                          fontWeight:
+                              isMarkdown ? FontWeight.normal : FontWeight.bold))
+                  : (isMarkdown
+                      ? Markdown(
+                          data: content,
+                          shrinkWrap: true,
+                          styleSheet: MarkdownStyleSheet(),
+                        )
+                      : ListTile(
+                          title: Text(content),
+                        ));
             },
           ),
         ),
@@ -121,6 +128,12 @@ class OpenAIChatState extends State<OpenAIChat> {
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
+              IconButton(
+                  onPressed: () => setState(() => _copyMode = !_copyMode),
+                  icon: Icon(
+                    Icons.content_copy,
+                    color: _copyMode ? Colors.blue : Colors.black,
+                  )),
               IconButton(
                 icon: const Icon(Icons.add_circle),
                 onPressed: () {
