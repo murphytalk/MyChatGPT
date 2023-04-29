@@ -12,13 +12,11 @@ class OpenAIChat extends StatefulWidget {
   OpenAIChatState createState() => OpenAIChatState();
 }
 
-class OpenAIChatState extends State<OpenAIChat> with RouteAware {
+class OpenAIChatState extends State<OpenAIChat>{
   final TextEditingController _textController = TextEditingController();
   List<Message> _messages = [];
   String? _curConversationId;
   bool _thinking = false;
-  bool _loadConversation = false;
-  bool _observerRegistered = false;
   bool _canAskQuestion = true;
 
   static const _prompt =
@@ -62,30 +60,6 @@ class OpenAIChatState extends State<OpenAIChat> with RouteAware {
       });
     } catch (e) {
       showErrorDialog(ctx, e.toString());
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_observerRegistered) {
-      log('route observer registered');
-      _observerRegistered = true;
-      routeObserver.subscribe(this, ModalRoute.of(context)!);
-    }
-  }
-
-  @override
-  void dispose() {
-    log('route observer unregistered');
-    routeObserver.unsubscribe(this);
-    super.dispose();
-  }
-
-  @override
-  void didPopNext() {
-    if (AppState().conversationToLoad.isNotEmpty) {
-      setState(() => _loadConversation = true);
     }
   }
 
@@ -169,13 +143,12 @@ class OpenAIChatState extends State<OpenAIChat> with RouteAware {
       return const AwaitWidget(caption: 'Thinking');
     }
 
-    if (_loadConversation && AppState().conversationToLoad.isNotEmpty) {
-      _curConversationId = AppState().conversationToLoad.uuid;
+    final arg = ModalRoute.of(context)?.settings.arguments;
+    if (arg!=null && (arg as ConversationInfo).isNotEmpty ){
+      _curConversationId = arg.uuid;
       return FutureBuilder(
-          future: storage.getConversation(AppState().conversationToLoad.uuid),
+          future: storage.getConversation(arg.uuid),
           builder: (ctx, conversation) {
-            AppState().conversationToLoad = ConversationInfo.empty();
-            _loadConversation = false;
             if (conversation.hasData) {
               storage.resumeConversation(_curConversationId!);
               _messages = conversation.data?.messages ?? [];

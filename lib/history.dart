@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_chat_gpt/main.dart';
 import 'package:my_chat_gpt/storage.dart';
+import 'package:my_chat_gpt/utils.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -53,9 +54,7 @@ class HistoryScreenState extends State<HistoryScreen> {
         itemCount: _documents.length + (_isLoading ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == _documents.length && _isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const AwaitWidget(caption: 'Loading');
           }
           final document = _documents[index];
           return ListTile(
@@ -69,8 +68,7 @@ class HistoryScreenState extends State<HistoryScreen> {
                 _selected = index;
               });
               AppState().conversationToLoad = document;
-              Navigator.popUntil(
-                  context, ModalRoute.withName(AppState.routeHome));
+              Navigator.pushNamed(context, AppState.routeHome, arguments: document);
             },
           );
         },

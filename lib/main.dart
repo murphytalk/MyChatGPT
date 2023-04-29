@@ -12,7 +12,6 @@ void main() {
   runApp(const MyApp());
 }
 
-final RouteObserver<ModalRoute> routeObserver = RouteObserver<PageRoute>();
 
 final IStorage storage = MongoDbStorage();
 
@@ -130,7 +129,6 @@ class MyApp extends StatelessWidget {
           AppState.routeHome: (c) => const MyHomePage(title: _title),
           AppState.routeHistory: (c) => const HistoryScreen(),
         },
-        navigatorObservers: [routeObserver],
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ));
@@ -196,15 +194,9 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     log('user is ${AppState().user}');
-    // This method is rerun every time setState is called
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
+        leading: Navigator.of(context).canPop() ? IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.arrow_back)): null,
         title: Text(widget.title),
         actions: [
           IconButton(
@@ -222,11 +214,5 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: const OpenAIChat(),
     );
-  }
-
-  @override
-  void dispose() {
-    storage.close();
-    super.dispose();
   }
 }
