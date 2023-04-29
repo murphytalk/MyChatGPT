@@ -140,7 +140,7 @@ class OpenAIChatState extends State<OpenAIChat>{
   @override
   Widget build(BuildContext context) {
     if (_thinking) {
-      return const AwaitWidget(caption: 'Thinking');
+      return const Center(child: AwaitWidget(caption: 'Thinking'));
     }
 
     final arg = ModalRoute.of(context)?.settings.arguments;
