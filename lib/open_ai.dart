@@ -101,6 +101,9 @@ class OpenAIChatState extends State<OpenAIChat>{
                 child: TextField(
                   enabled: _canAskQuestion,
                   controller: _textController,
+                  keyboardType: TextInputType.multiline,
+                  maxLines: null,
+                  minLines: 1,
                   decoration: const InputDecoration(
                     labelText: 'Ask a question',
                   ),
@@ -113,7 +116,8 @@ class OpenAIChatState extends State<OpenAIChat>{
                   if (q.isNotEmpty) {
                     if (_curConversationId == null) {
                       setState(() => _canAskQuestion = false);
-                      storage.newConversation([], AppState().user.name, q).then(
+                      final topic = q.substring(0,q.indexOf('\n'));
+                      storage.newConversation([], AppState().user.name, topic).then(
                           (value) {
                         _curConversationId = value;
                         _textController.clear();
