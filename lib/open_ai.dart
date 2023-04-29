@@ -1,5 +1,6 @@
 import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_chat_gpt/main.dart';
 import 'package:my_chat_gpt/storage.dart';
@@ -12,7 +13,7 @@ class OpenAIChat extends StatefulWidget {
   OpenAIChatState createState() => OpenAIChatState();
 }
 
-class OpenAIChatState extends State<OpenAIChat>{
+class OpenAIChatState extends State<OpenAIChat> {
   final TextEditingController _textController = TextEditingController();
   List<Message> _messages = [];
   String? _curConversationId;
@@ -63,6 +64,39 @@ class OpenAIChatState extends State<OpenAIChat>{
     }
   }
 
+  void _submitQuestion() {
+    var q = _textController.text.trim();
+    if (q.isNotEmpty) {
+      if (_curConversationId == null) {
+        setState(() => _canAskQuestion = false);
+        final newLinePos = q.indexOf('\n');
+        final topic = newLinePos > 0 ? q.substring(0, newLinePos) : q;
+        storage.newConversation([], AppState().user.name, topic).then((value) {
+          _curConversationId = value;
+          _textController.clear();
+          _sendMessage(context, q)
+              .whenComplete(() => setState(() => _canAskQuestion = true));
+        }).catchError((e) {
+          showErrorDialog(context, e.toString());
+        });
+      } else {
+        _sendMessage(context, q)
+            .whenComplete(() => setState(() => _canAskQuestion = true));
+        _textController.clear();
+      }
+    }
+  }
+
+  bool _handleKeyPressed(RawKeyEvent ev) {
+    if (ev is RawKeyDownEvent &&
+        ev.logicalKey == LogicalKeyboardKey.enter &&
+        ev.isControlPressed) {
+      _submitQuestion();
+      return false;
+    }
+    return true;
+  }
+
   Widget _buildNormalUi(BuildContext context) {
     return Column(
       children: [
@@ -98,6 +132,9 @@ class OpenAIChatState extends State<OpenAIChat>{
                 },
               ),
               Expanded(
+                  child: RawKeyboardListener(
+                onKey: _handleKeyPressed,
+                focusNode: FocusNode(),
                 child: TextField(
                   enabled: _canAskQuestion,
                   controller: _textController,
@@ -108,32 +145,10 @@ class OpenAIChatState extends State<OpenAIChat>{
                     labelText: 'Ask a question',
                   ),
                 ),
-              ),
+              )),
               IconButton(
-                icon: const Icon(Icons.send),
-                onPressed: () {
-                  var q = _textController.text.trim();
-                  if (q.isNotEmpty) {
-                    if (_curConversationId == null) {
-                      setState(() => _canAskQuestion = false);
-                      final topic = q.substring(0,q.indexOf('\n'));
-                      storage.newConversation([], AppState().user.name, topic).then(
-                          (value) {
-                        _curConversationId = value;
-                        _textController.clear();
-                        _sendMessage(context, q).whenComplete(
-                            () => setState(() => _canAskQuestion = true));
-                      }).catchError((e) {
-                        showErrorDialog(context, e.toString());
-                      });
-                    } else {
-                      _sendMessage(context, q).whenComplete(
-                          () => setState(() => _canAskQuestion = true));
-                      _textController.clear();
-                    }
-                  }
-                },
-              ),
+                  icon: const Icon(Icons.send),
+                  onPressed: () => _submitQuestion()),
             ],
           ),
         ),
@@ -148,7 +163,7 @@ class OpenAIChatState extends State<OpenAIChat>{
     }
 
     final arg = ModalRoute.of(context)?.settings.arguments;
-    if (arg!=null && (arg as ConversationInfo).isNotEmpty ){
+    if (arg != null && (arg as ConversationInfo).isNotEmpty) {
       _curConversationId = arg.uuid;
       return FutureBuilder(
           future: storage.getConversation(arg.uuid),
@@ -176,10 +191,7 @@ class OpenAIChatState extends State<OpenAIChat>{
               }
               return _buildNormalUi(context);
             } else {
-              return const Center(
-                  child: AwaitWidget(
-                caption: "Loading ..."
-              ));
+              return const Center(child: AwaitWidget(caption: "Loading ..."));
             }
           });
     } else {
