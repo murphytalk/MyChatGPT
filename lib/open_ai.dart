@@ -2,7 +2,6 @@ import 'package:dart_openai/openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:my_chat_gpt/main.dart';
 import 'package:my_chat_gpt/storage.dart';
 import 'package:my_chat_gpt/utils.dart';
@@ -46,7 +45,10 @@ class OpenAIChatState extends State<OpenAIChat> {
 
   Future<void> _sendMessage(BuildContext ctx, String message) async {
     setState(() {
-      _messages.add(Message(fromAI: false, content: message));
+      _messages.add(Message(
+          fromAI: false,
+          content: message,
+          language: detectLanguage(string: message)));
     });
 
     storage.question(message);
@@ -59,7 +61,10 @@ class OpenAIChatState extends State<OpenAIChat> {
       final response = await _getOpenAiResponse(_messages);
       setState(() {
         _thinking = false;
-        _messages.add(Message(fromAI: true, content: response));
+        _messages.add(Message(
+            fromAI: true,
+            content: response,
+            language: detectLanguage(string: message)));
       });
     } catch (e) {
       showErrorDialog(ctx, e.toString());
@@ -106,8 +111,10 @@ class OpenAIChatState extends State<OpenAIChat> {
           child: ListView.builder(
             itemCount: _messages.length,
             itemBuilder: (context, index) {
-              final isMarkdown = _messages[index].fromAI;
-              final content = _messages[index].content;
+              final msg = _messages[index];
+              final isMarkdown = msg.fromAI;
+              final content = msg.content;
+              final isChinese = msg.language == 'zh';
               return _copyMode
                   ? SelectableText(content,
                       style: TextStyle(
@@ -120,10 +127,7 @@ class OpenAIChatState extends State<OpenAIChat> {
                           styleSheet: MarkdownStyleSheet(),
                         )
                       : ListTile(
-                          title: Text(content,
-                              style: GoogleFonts.titilliumWeb(
-                                  textStyle: const TextStyle(
-                                      fontWeight: FontWeight.w600))),
+                          title: Text(content, style: txtStyle(isChinese)),
                         ));
             },
           ),

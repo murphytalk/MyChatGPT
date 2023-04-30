@@ -25,6 +25,7 @@ class AppState {
   factory AppState() {
     return _singleton;
   }
+
   AppState._internal();
 
   static const routeHome = '/h';
