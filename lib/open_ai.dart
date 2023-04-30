@@ -40,7 +40,7 @@ class OpenAIChatState extends State<OpenAIChat> {
           .toList(growable: false)
     ]);
     storage.answer(completions);
-    return completions.choices[0].message.content;
+    return completions.answer;
   }
 
   Future<void> _sendMessage(BuildContext ctx, String message) async {

@@ -86,6 +86,10 @@ class ConversationInfo {
   }
 }
 
+extension OpenAIChatCompletionModelExt on OpenAIChatCompletionModel {
+  String get answer => choices[0].message.content;
+}
+
 const _name = 'name';
 const _tags = 'tags';
 const _owner = 'owner';
@@ -202,6 +206,7 @@ class MongoDbStorage implements IStorage {
       _tags: tags,
       _owner: owner,
       _topic: topic,
+      _language: detectLanguage(string: topic),
       _created: DateTime.now().microsecondsSinceEpoch,
       _messages: []
     };
@@ -272,12 +277,18 @@ class MongoDbStorage implements IStorage {
 
   @override
   Future<bool> question(String msg) {
-    return _saveMessage({_fromAI: false, _question: msg});
+    return _saveMessage({
+      _fromAI: false,
+      _question: msg,
+      _language: detectLanguage(string: msg)
+    });
   }
 
   @override
   Future<bool> answer(OpenAIChatCompletionModel msg) {
-    return _saveMessage({_fromAI: true, _answer: msg.toMap()});
+    final m = msg.toMap();
+    m[_language] = detectLanguage(string: msg.answer);
+    return _saveMessage({_fromAI: true, _answer: m});
   }
 
   @override
