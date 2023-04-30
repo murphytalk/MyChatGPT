@@ -66,6 +66,7 @@ class Message {
   final bool fromAI;
   final String content;
   final String language;
+  bool get isChinese => language == langZh;
   const Message(
       {required this.fromAI, required this.content, required this.language});
 }
@@ -74,11 +75,14 @@ class Message {
 class ConversationInfo {
   final String uuid;
   final String topic;
-  const ConversationInfo({required this.uuid, required this.topic});
+  final String language;
+  const ConversationInfo(
+      {required this.uuid, required this.topic, required this.language});
   bool get isEmpty => uuid == '';
   bool get isNotEmpty => !isEmpty;
+  bool get isChinese => language == langZh;
   factory ConversationInfo.empty() {
-    return const ConversationInfo(uuid: "", topic: "");
+    return const ConversationInfo(uuid: "", topic: "", language: "en");
   }
 }
 
@@ -95,6 +99,17 @@ const _messages = 'messages';
 const _users = 'users';
 const _config = 'config';
 const _language = 'lang';
+
+String _decideLang(dynamic m, String content) {
+  String lang;
+  final String? l = m[_language];
+  if (l == null) {
+    lang = detectLanguage(string: content);
+  } else {
+    lang = l;
+  }
+  return lang;
+}
 
 class Conversation {
   final String uuid;
@@ -126,14 +141,10 @@ class Conversation {
       } else {
         content = m[_question];
       }
-      String lang;
-      final String? l = m[_language];
-      if (l == null) {
-        lang = detectLanguage(string: content);
-      } else {
-        lang = l;
-      }
-      messages.add(Message(fromAI: isFromAi, content: content, language: lang));
+      messages.add(Message(
+          fromAI: isFromAi,
+          content: content,
+          language: _decideLang(m, content)));
     });
     final tags = (json[_tags] as List<dynamic>)
         .map((e) => e.toString())
@@ -328,6 +339,7 @@ class MongoDbStorage implements IStorage {
         '\$project': {
           _uuid: 1,
           _topic: 1,
+          _language: 1,
           'msgCount': {'\$size': '\$$_messages'}
         }
       },
@@ -340,10 +352,13 @@ class MongoDbStorage implements IStorage {
       {'\$limit': limit}
     ]);
 
-    return c
-        .map((e) => ConversationInfo(
-            uuid: e[_uuid] as String, topic: e[_topic] as String))
-        .toList();
+    return c.map((e) {
+      final topic = e[_topic] as String;
+      return ConversationInfo(
+          uuid: e[_uuid] as String,
+          topic: topic,
+          language: _decideLang(e, topic));
+    }).toList();
   }
 
   @override

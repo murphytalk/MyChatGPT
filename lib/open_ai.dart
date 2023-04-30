@@ -114,7 +114,6 @@ class OpenAIChatState extends State<OpenAIChat> {
               final msg = _messages[index];
               final isMarkdown = msg.fromAI;
               final content = msg.content;
-              final isChinese = msg.language == 'zh';
               return _copyMode
                   ? SelectableText(content,
                       style: TextStyle(
@@ -127,7 +126,8 @@ class OpenAIChatState extends State<OpenAIChat> {
                           styleSheet: MarkdownStyleSheet(),
                         )
                       : ListTile(
-                          title: Text(content, style: txtStyle(isChinese)),
+                          title: Text(content,
+                              style: txtStyle(msg.isChinese, FontWeight.w600)),
                         ));
             },
           ),

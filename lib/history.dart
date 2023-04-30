@@ -59,10 +59,9 @@ class HistoryScreenState extends State<HistoryScreen> {
           }
           final document = _documents[index];
           return ListTile(
-            title: Text(
-              document.topic,
-              overflow: TextOverflow.ellipsis,
-            ),
+            title: Text(document.topic,
+                overflow: TextOverflow.ellipsis,
+                style: txtStyle(document.isChinese, FontWeight.normal)),
             selected: _selected == index,
             onTap: () {
               setState(() {

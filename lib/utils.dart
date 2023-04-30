@@ -50,25 +50,27 @@ void log(String msg) {
   dev.log(msg, time: DateTime.now());
 }
 
+const langEn = 'en';
+const langZh = 'zh';
+const langJa = 'ja';
+
 String detectLanguage({required String string}) {
-  String languageCodes = 'en';
+  String languageCodes = langEn;
 
   final RegExp chinese = RegExp(r'[\u4E00-\u9FFF]+');
   final RegExp japanese = RegExp(r'[\u3040-\u30FF]+');
 
-  if (chinese.hasMatch(string)) languageCodes = 'zh';
-  if (japanese.hasMatch(string)) languageCodes = 'ja';
+  if (chinese.hasMatch(string)) languageCodes = langZh;
+  if (japanese.hasMatch(string)) languageCodes = langJa;
 
   return languageCodes;
 }
 
 // This google font renders horribly for Chinese on windows, we use the Windows Chinese font
-TextStyle txtStyle(bool isChinese) {
+TextStyle txtStyle(bool isChinese, FontWeight? weight) {
   return isChinese && Platform.isWindows
-      ? const TextStyle(
-          fontFamily: 'Microsoft YaHei', fontWeight: FontWeight.w600)
-      : GoogleFonts.titilliumWeb(
-          textStyle: const TextStyle(fontWeight: FontWeight.w600));
+      ? TextStyle(fontFamily: 'Microsoft YaHei', fontWeight: weight)
+      : GoogleFonts.titilliumWeb(textStyle: TextStyle(fontWeight: weight));
 }
 
 class ErrorAlertScreen extends StatelessWidget {
