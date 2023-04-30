@@ -65,7 +65,9 @@ class Config implements Serializable {
 class Message {
   final bool fromAI;
   final String content;
-  const Message({required this.fromAI, required this.content});
+  final String language;
+  const Message(
+      {required this.fromAI, required this.content, required this.language});
 }
 
 @immutable
@@ -92,6 +94,7 @@ const _created = 'created';
 const _messages = 'messages';
 const _users = 'users';
 const _config = 'config';
+const _language = 'lang';
 
 class Conversation {
   final String uuid;
@@ -123,7 +126,14 @@ class Conversation {
       } else {
         content = m[_question];
       }
-      messages.add(Message(fromAI: isFromAi, content: content));
+      String lang;
+      final String? l = m[_language];
+      if (l == null) {
+        lang = detectLanguage(string: content);
+      } else {
+        lang = l;
+      }
+      messages.add(Message(fromAI: isFromAi, content: content, language: lang));
     });
     final tags = (json[_tags] as List<dynamic>)
         .map((e) => e.toString())
